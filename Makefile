@@ -1,15 +1,15 @@
-CC       = gcc
+CC       = clang
 ASM      = nasm
-LD       = ld
+LD       = clang
 EMU      = qemu-system-x86_64
 BUILDDIR = build
 
 CINCLUDES = -Ilib -Ikernel -Idrivers -Iboot -Iarch/x86
-CCFLAGS   = -m32 -fno-stack-protector -fno-builtin $(CINCLUDES)
+CCFLAGS   = -target i686-unknown-none-elf -ffreestanding -nostdlib -fno-builtin -fno-stack-protector -m32 $(CINCLUDES)
 DEPFLAGS  = -MMD -MP
 ASMFLAGS  = -felf32
 EMUFLAGS  =
-LDFLAGS   = -m elf_i386 -T boot/linker.ld -z max-page-size=0x1000 --build-id=none
+LDFLAGS = -target i686-unknown-none-elf -m32 -nostdlib -T boot/linker.ld -fuse-ld=lld -Wl,-z,notext
 
 C_SRCS   := $(wildcard kernel/*.c drivers/*.c lib/*.c arch/x86/*.c)
 ASM_SRCS := $(wildcard boot/*.s arch/x86/*.s)

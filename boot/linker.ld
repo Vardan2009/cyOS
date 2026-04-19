@@ -3,7 +3,9 @@ ENTRY(start)
 SECTIONS
 {
 	.     = 0x100000;
-	.text : { *(.text) }
+
+	.boot ALIGN(4) : { *(.multiboot) }
+	.text ALIGN(4096) : { *(.text) }
 	.data : { *(.data) }
 	.bss  : { *(.bss)  }
 }
