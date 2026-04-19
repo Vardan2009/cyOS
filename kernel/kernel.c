@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #include "gdt.h"
 #include "idt.h"
 #include "pit.h"
@@ -5,16 +7,17 @@
 
 void kmain(void) {
     VGAReset();
-    VGAPrint("Hello, cyOS!\n");
+
+    printf("Hello, cyOS!\n");
 
     GDTInit();
-    VGAPrint("GDT Initialized\n");
+    printf("GDT Initialized\n");
 
     IDTInit();
-    VGAPrint("IDT Initialized\n");
+    printf("IDT Initialized\n");
 
     PITInit();
-    VGAPrint("PIT Initialized\n");
+    printf("PIT Initialized\n");
 
     while (1);
 }
