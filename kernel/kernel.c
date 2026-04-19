@@ -1,5 +1,6 @@
 #include "gdt.h"
 #include "idt.h"
+#include "pit.h"
 #include "vga.h"
 
 void kmain(void) {
@@ -11,4 +12,9 @@ void kmain(void) {
 
     IDTInit();
     VGAPrint("IDT Initialized\n");
+
+    PITInit();
+    VGAPrint("PIT Initialized\n");
+
+    while (1);
 }
