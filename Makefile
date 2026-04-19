@@ -1,5 +1,6 @@
 CC       = gcc
 ASM      = nasm
+LD       = ld
 EMU      = qemu-system-x86_64
 BUILDDIR = build
 
@@ -8,9 +9,10 @@ CCFLAGS   = -m32 -fno-stack-protector -fno-builtin $(CINCLUDES)
 DEPFLAGS  = -MMD -MP
 ASMFLAGS  = -felf32
 EMUFLAGS  =
+LDFLAGS   = -m elf_i386 -T boot/linker.ld -z max-page-size=0x1000 --build-id=none
 
 C_SRCS   := $(wildcard kernel/*.c drivers/*.c lib/*.c arch/x86/*.c)
-ASM_SRCS := $(wildcard boot/*.s) arch/x86/gdt.s
+ASM_SRCS := $(wildcard boot/*.s arch/x86/*.s)
 C_OBJS   := $(patsubst %.c, $(BUILDDIR)/%.c.o, $(C_SRCS))
 ASM_OBJS := $(patsubst %.s, $(BUILDDIR)/%.s.o, $(ASM_SRCS))
 OBJS     := $(C_OBJS) $(ASM_OBJS)
@@ -31,7 +33,7 @@ $(BUILDDIR)/%.s.o: %.s
 $(BUILDDIR)/cy.iso: $(OBJS)
 	mkdir -p $(BUILDDIR)/image/boot/grub
 	cp boot/grub/grub.cfg $(BUILDDIR)/image/boot/grub/grub.cfg
-	ld -m elf_i386 -T boot/linker.ld -o $(BUILDDIR)/image/boot/kernel $(OBJS)
+	$(LD) $(LDFLAGS) -o $(BUILDDIR)/image/boot/kernel $(OBJS)
 	grub-mkrescue -o $@ $(BUILDDIR)/image
 
 clean:

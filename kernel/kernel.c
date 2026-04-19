@@ -1,11 +1,14 @@
 #include "gdt.h"
+#include "idt.h"
 #include "vga.h"
 
 void kmain(void) {
     VGAReset();
-    VGAPrint("Hello, cyOS!\r\n");
+    VGAPrint("Hello, cyOS!\n");
 
     GDTInit();
+    VGAPrint("GDT Initialized\n");
 
-    VGAPrint("GDT Initialized!\r\n");
+    IDTInit();
+    VGAPrint("IDT Initialized\n");
 }
