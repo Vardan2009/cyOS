@@ -1,5 +1,6 @@
 #include <stdio.h>
 
+#include "ps2.h"
 #include "vga.h"
 
 void printi(int value) {
@@ -137,4 +138,89 @@ void printf(const char *format, ...) {
     va_start(args, format);
     vprintf_impl(format, args);
     va_end(args);
+}
+
+void scanl(char *buffer, unsigned int size) {
+    int i = 0;
+
+    while (1) {
+        char c = PS2KBGet();
+        if (c == '\b') {
+            if (i > 0) {
+                if (buffer[i - 1] == '\t')
+                    for (int i = 0; i < 4; ++i) VGABackspace();
+                else
+                    VGABackspace();
+                i--;
+            }
+            continue;
+        }
+        if (c == '\0') continue;
+        if (c == '\n' || i >= size - 1) {
+            VGAPrintC('\n');
+            break;
+        }
+        buffer[i++] = c;
+        VGAPrintC(c);
+    }
+    buffer[i] = '\0';
+}
+
+int scanf(const char *format, ...) {
+    va_list args;
+    va_start(args, format);
+
+    char buffer[256];
+    scanl(buffer, 256);
+
+    for (const char *p = format; *p != '\0'; p++) {
+        if (*p == '%') {
+            p++;
+            switch (*p) {
+                case 's': {
+                    char *str = va_arg(args, char *);
+                    int j = 0;
+                    while (buffer[j] && buffer[j] != ' ' &&
+                           j < sizeof(buffer) - 1) {
+                        str[j] = buffer[j];
+                        j++;
+                    }
+                    str[j] = '\0';
+                    break;
+                }
+                case 'd': {
+                    int *num = va_arg(args, int *);
+                    *num = 0;
+                    int sign = 1;
+                    if (buffer[0] == '-') {
+                        sign = -1;
+                    }
+                    for (int j = (sign == -1) ? 1 : 0;
+                         buffer[j] >= '0' && buffer[j] <= '9'; j++) {
+                        *num = *num * 10 + (buffer[j] - '0');
+                    }
+                    *num *= sign;
+                    break;
+                }
+                case 'u': {
+                    unsigned int *num = va_arg(args, unsigned int *);
+                    *num = 0;
+                    for (int j = 0; buffer[j] >= '0' && buffer[j] <= '9'; j++) {
+                        *num = *num * 10 + (buffer[j] - '0');
+                    }
+                    break;
+                }
+                case 'c': {
+                    char *ch = va_arg(args, char *);
+                    *ch = buffer[0];
+                    break;
+                }
+                default:
+                    break;
+            }
+        }
+    }
+
+    va_end(args);
+    return 1;
 }

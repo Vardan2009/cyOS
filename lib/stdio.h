@@ -10,4 +10,7 @@ void printf(const char *fmt, ...);
 void vprintf(const char *fmt, va_list);
 void printfloat(float value, int width, int precision, char padChar);
 
+void scanl(char *buffer, unsigned int size);
+int scanf(const char *fmt, ...);
+
 #endif  // CY_STDIO_H

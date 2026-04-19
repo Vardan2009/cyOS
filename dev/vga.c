@@ -1,5 +1,6 @@
 #include "vga.h"
 
+#include <io.h>
 #include <stdint.h>
 
 static uint16_t column = 0;
@@ -16,6 +17,8 @@ void VGAReset() {
     for (uint16_t y = 0; y < VGA_HEIGHT; ++y)
         for (uint16_t x = 0; x < VGA_WIDTH; ++x)
             vga[y * VGA_WIDTH + x] = VGA_CHAR(' ', defaultColor);
+
+    VGASetCurPos(0);
 }
 
 void VGALineBreak() {
@@ -24,6 +27,8 @@ void VGALineBreak() {
     else
         VGAScroll();
     column = 0;
+
+    VGASetCurPos(line * VGA_WIDTH + column);
 }
 
 void VGAScroll() {
@@ -33,6 +38,18 @@ void VGAScroll() {
 
     for (uint16_t x = 0; x < VGA_WIDTH; ++x)
         vga[(VGA_HEIGHT - 1) * VGA_WIDTH + x] = VGA_CHAR(' ', defaultColor);
+}
+
+void VGABackspace() {
+    if (column == 0) {
+        column = VGA_WIDTH - 1;
+        if (line > 0) --line;
+    } else
+        --column;
+    VGAPrintC(' ');
+    --column;
+
+    VGASetCurPos(line * VGA_WIDTH + column);
 }
 
 void VGAPrintC(char c) {
@@ -54,8 +71,16 @@ void VGAPrintC(char c) {
             if (column == VGA_WIDTH) VGALineBreak();
             vga[line * VGA_WIDTH + (column++)] = VGA_CHAR(c, currentColor);
     }
+    VGASetCurPos(line * VGA_WIDTH + column);
 }
 
 void VGAPrint(const char *s) {
     while (*s) VGAPrintC(*(s++));
+}
+
+void VGASetCurPos(uint16_t position) {
+    outb(VGA_CTRL_REG, 0x0F);
+    outb(VGA_DATA_REG, (uint8_t)(position & 0xFF));
+    outb(VGA_CTRL_REG, 0x0E);
+    outb(VGA_DATA_REG, (uint8_t)((position >> 8) & 0xFF));
 }
