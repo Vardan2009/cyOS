@@ -1,0 +1,17 @@
+GLOBAL GDTFlush 
+
+GDTFlush:
+	MOV EAX, [ESP + 4]
+	LGDT [EAX]
+
+	MOV EAX, 0x10 
+	
+	MOV DS, AX
+	MOV ES, AX
+	MOV FS, AX
+	MOV GS, AX
+	MOV SS, AX
+
+	JMP 0x08:.FLUSH
+.FLUSH:
+	RET
