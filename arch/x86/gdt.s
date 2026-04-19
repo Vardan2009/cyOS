@@ -1,4 +1,5 @@
 GLOBAL GDTFlush 
+GLOBAL TSSFlush
 
 GDTFlush:
 	MOV EAX, [ESP + 4]
@@ -14,4 +15,9 @@ GDTFlush:
 
 	JMP 0x08:.FLUSH
 .FLUSH:
+	RET
+
+TSSFlush:
+	MOV AX, 0x2B
+	LTR AX
 	RET
