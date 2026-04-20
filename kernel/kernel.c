@@ -7,6 +7,7 @@
 #include "multiboot.h"
 #include "pit.h"
 #include "ps2.h"
+#include "rtc.h"
 #include "vga.h"
 
 void kmain(uint32_t magic, MultibootInfo *mbi) {
@@ -34,6 +35,11 @@ void kmain(uint32_t magic, MultibootInfo *mbi) {
 
     KMallocInit(0x1000);
     MemMapPage(0xC00B8000, 0xB8000, PAGE_FLAG_PRESENT | PAGE_FLAG_WRITE);
+
+    DateTime dt = RTCGetDateTime();
+
+    printf("%d/%d/%d %d:%d:%d\n", dt.day, dt.month, dt.year, dt.hour, dt.minute,
+           dt.second);
 
     while (1) {
         char buf[512];
