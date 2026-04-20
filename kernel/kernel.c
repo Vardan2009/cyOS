@@ -8,9 +8,12 @@
 #include "pit.h"
 #include "ps2.h"
 #include "rtc.h"
+#include "serial.h"
 #include "vga.h"
 
 void kmain(uint32_t magic, MultibootInfo *mbi) {
+    SerialInit(DBGPORT);
+
     VGAReset();
 
     printf("Hello, cyOS!\n");

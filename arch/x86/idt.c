@@ -4,6 +4,7 @@
 #include <io.h>
 #include <string.h>
 
+#include "serial.h"
 #include "vga.h"
 
 IDTEntry idtEntries[256];
@@ -137,6 +138,11 @@ void ISRHandler(IntRegs *regs) {
         VGAPrint("\n===   EXCEPTION   ===\n");
         VGAPrint(excMessages[regs->intno]);
         VGAPrint("\n=== SYSTEM HALTED ===\n");
+
+        SerialWriteStr(DBGPORT, "\n===   EXCEPTION   ===\n");
+        SerialWriteStr(DBGPORT, excMessages[regs->intno]);
+        SerialWriteStr(DBGPORT, "\n=== SYSTEM HALTED ===\n");
+
         while (1);
     }
 }

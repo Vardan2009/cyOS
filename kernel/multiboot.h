@@ -49,6 +49,14 @@ typedef struct {
     uint16_t vbeInterfaceSeg;
     uint16_t vbeInterfaceOff;
     uint16_t vbeInterfaceLen;
+
+    uint64_t fbAddr;
+    uint32_t fbPitch;
+    uint32_t fbWidth;
+    uint32_t fbHeight;
+    uint8_t fbBPP;
+    uint8_t fbType;
+    uint16_t fbColorInfo;
 } MultibootInfo;
 
 #define MULTIBOOT_MEMORY_AVAILABLE 1
