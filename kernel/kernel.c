@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 
 #include "gdt.h"
 #include "idt.h"
@@ -30,9 +31,9 @@ void kmain(uint32_t magic, MultibootInfo *mbi) {
     uint32_t physAllocStart = (mod1 + 0xFFF) & ~0xFFF;
 
     MemInit(mbi->memU * 1024, physAllocStart);
-    KMallocInit(0x1000);
 
     MemMapPage(0xC00B8000, 0xB8000, PAGE_FLAG_PRESENT | PAGE_FLAG_WRITE);
+    KMallocInit(0x1000);
 
     while (1) {
         char buf[512];

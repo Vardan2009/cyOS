@@ -15,4 +15,6 @@ typedef unsigned long long int uint64_t;
 
 typedef unsigned long int addr_t;
 
+#define NULL 0
+
 #endif  // CY_STDINT_H
