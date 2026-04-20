@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include "ps2.h"
+#include "inbuffer.h"
 #include "vga.h"
 
 void printi(int value) {
@@ -144,7 +144,7 @@ void scanl(char *buffer, unsigned int size) {
     int i = 0;
 
     while (1) {
-        char c = PS2KBGet();
+        char c = InBufferGetC();
         if (c == '\b') {
             if (i > 0) {
                 if (buffer[i - 1] == '\t')

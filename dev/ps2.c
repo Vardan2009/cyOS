@@ -3,13 +3,7 @@
 #include <io.h>
 
 #include "idt.h"
-
-uint8_t shift, caps, ctrl;
-
-#define INPUT_BUFFER_SIZE 128
-char inputBuffer[INPUT_BUFFER_SIZE];
-int bufferStart = 0;
-int bufferEnd = 0;
+#include "inbuffer.h"
 
 #pragma region keys
 const uint32_t UNKNOWN = 0xFFFFFFFF;
@@ -83,18 +77,6 @@ const uint32_t uppercase[128] = {
     UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN};
 #pragma endregion keys
 
-void BufferPutC(char c) {
-    inputBuffer[bufferEnd] = c;
-    bufferEnd = (bufferEnd + 1) % INPUT_BUFFER_SIZE;
-}
-
-char BufferGetC() {
-    if (bufferStart == bufferEnd) return 0;
-    char c = inputBuffer[bufferStart];
-    bufferStart = (bufferStart + 1) % INPUT_BUFFER_SIZE;
-    return c;
-}
-
 void PS2KBInit() { IRQInstallHandler(1, &PS2KBHandler); }
 
 void PS2KBHandler(IntRegs *regs) {
@@ -136,11 +118,8 @@ void PS2KBHandler(IntRegs *regs) {
                     asm volatile("cli");
                     asm volatile("hlt");
                 }
-                BufferPutC(key);
+                InBufferPutC(key);
             }
             break;
     }
 }
-
-char PS2KBGet() { return BufferGetC(); }
-uint8_t PS2KBEmpty() { return bufferEnd == bufferStart; }
