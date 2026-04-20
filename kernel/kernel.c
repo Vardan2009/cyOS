@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <string.h>
 
 #include "gdt.h"
 #include "idt.h"
@@ -27,13 +26,14 @@ void kmain(uint32_t magic, MultibootInfo *mbi) {
     PS2KBInit();
     printf("PS/2 Driver Initialized\n");
 
-    uint32_t mod1 = *(uint32_t *)(mbi->modsAddr + 4);
-    uint32_t physAllocStart = (mod1 + 0xFFF) & ~0xFFF;
+    extern uint32_t _kernel_end;
+    uint32_t physAllocStart =
+        ((uint32_t)&_kernel_end - KERNEL_START + 0xFFF) & ~0xFFF;
 
     MemInit(mbi->memU * 1024, physAllocStart);
 
-    MemMapPage(0xC00B8000, 0xB8000, PAGE_FLAG_PRESENT | PAGE_FLAG_WRITE);
     KMallocInit(0x1000);
+    MemMapPage(0xC00B8000, 0xB8000, PAGE_FLAG_PRESENT | PAGE_FLAG_WRITE);
 
     while (1) {
         char buf[512];

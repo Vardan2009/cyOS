@@ -7,7 +7,7 @@
 static uint32_t pageFrameMin, pageFrameMax, totalAlloc;
 
 #define NUM_PAGES_DIRS 256
-#define NUM_PAGE_FRAMES (0x100000000 / 0x1000 / 8)
+#define NUM_PAGE_FRAMES (0x100000000 / 0x1000)
 
 uint8_t physMemBitmap[NUM_PAGE_FRAMES / 8];
 
@@ -26,7 +26,7 @@ void PMMInit(uint32_t memLow, uint32_t memHigh) {
 
 uint32_t PMMAllocPageFrame() {
     uint32_t start = pageFrameMin / 8 + ((pageFrameMin & 7) != 0 ? 1 : 0);
-    uint32_t end = pageFrameMax / 8 + ((pageFrameMax & 7) != 0 ? 1 : 0);
+    uint32_t end = pageFrameMax / 8 - ((pageFrameMax & 7) != 0 ? 1 : 0);
 
     for (uint32_t b = start; b < end; ++b) {
         uint8_t byte = physMemBitmap[b];
@@ -40,7 +40,7 @@ uint32_t PMMAllocPageFrame() {
                 physMemBitmap[b] = byte;
                 ++totalAlloc;
 
-                uint32_t addr = (b * 8 * i) * 0x1000;
+                uint32_t addr = (b * 8 + i) * 0x1000;
                 return addr;
             }
         }
@@ -109,7 +109,9 @@ void MemMapPage(uint32_t vaddr, uint32_t paddr, uint32_t flags) {
     }
 }
 
-void Invalidate(uint32_t vaddr) { asm volatile("invlpg %0" ::"m"(vaddr)); }
+void Invalidate(uint32_t vaddr) {
+    asm volatile("invlpg (%0)" ::"r"(vaddr) : "memory");
+}
 
 void MemInit(uint32_t memHigh, uint32_t physAllocStart) {
     memNumVPages = 0;
