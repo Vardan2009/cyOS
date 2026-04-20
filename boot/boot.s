@@ -1,7 +1,12 @@
 BITS 32
 
 MAGIC EQU 0x1BADB002
-FLAGS EQU 0x00000003
+
+F_PAGE_ALIGN EQU 1 << 0 
+F_MEM_INFO   EQU 1 << 1 
+F_MEM_GFX    EQU 1 << 2
+
+FLAGS EQU F_PAGE_ALIGN | F_MEM_INFO
 
 SECTION .multiboot
 	ALIGN 4
@@ -9,24 +14,61 @@ SECTION .multiboot
 	DD FLAGS
 	DD -(MAGIC + FLAGS)
 
-SECTION .text
-GLOBAL start
-EXTERN kmain
+	DD 0, 0, 0, 0, 0
 
-start:
-	CLI
-	MOV ESP, STACKSPACE
-	
-	PUSH EBX
-	PUSH EAX
-	
-	CALL kmain
-	HLT
-HALTKERN:
-	CLI
-	HLT
-	JMP HALTKERN
+	; graphics stuff for later
+	DD 0 
+	DD 800 
+	DD 600
+	DD 32
 
-SECTION .bss
-RESB 8192
-STACKSPACE:
+SECTION .bss 
+	ALIGN 16
+	STACKBOTTOM:
+		RESB 16384 * 8 
+	STACKTOP:
+
+SECTION .boot 
+	GLOBAL _start
+	_start:
+		; paging!
+		MOV ECX, (initialPageDir - 0xC0000000)
+		MOV CR3, ECX
+
+		MOV ECX, CR4
+		OR ECX, 0x10 
+		MOV CR4, ECX
+
+		MOV ECX, CR0
+		OR ECX, 0x80000000
+		MOV CR0, ECX 
+
+		JMP HIGHER_HALF
+
+SECTION .text 
+	EXTERN kmain
+	HIGHER_HALF:
+		MOV ESP, STACKTOP 
+		PUSH EBX
+		PUSH EAX 
+		XOR EBP, EBP
+
+		CALL kmain 
+	
+	HALT_KERNEL:
+		HLT 
+		JMP HALT_KERNEL
+
+SECTION .data
+	ALIGN 4096
+
+	GLOBAL initialPageDir
+	initialPageDir:
+		DD 10000011b 
+		TIMES 768-1 DD 0
+		DD (0 << 22) | 10000011b
+		DD (1 << 22) | 10000011b
+		DD (2 << 22) | 10000011b
+		DD (3 << 22) | 10000011b
+		TIMES 256-4 DD 0
+

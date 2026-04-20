@@ -73,6 +73,8 @@ void VGAPrintC(char c) {
             if (column == VGA_WIDTH) VGALineBreak();
             vga[line * VGA_WIDTH + (column++)] = VGA_CHAR(c, currentColor);
     }
+
+    VGASetCurPos(line * VGA_WIDTH + column);
 }
 
 void VGAPrint(const char *s) {
