@@ -5,7 +5,7 @@
 
 static uint16_t column = 0;
 static uint16_t line = 0;
-static uint16_t *const vga = (uint16_t *const)0xB8000;
+static uint16_t *const vga = (uint16_t *const)0xC00B8000;
 static const uint16_t defaultColor = VGA_COLOR(COLOR8_BLACK, COLOR8_LIGHT_GRAY);
 static uint16_t currentColor = defaultColor;
 

@@ -2,7 +2,8 @@
 
 #include "gdt.h"
 #include "idt.h"
-#include "mem.h"
+#include "kmalloc.h"
+#include "memory.h"
 #include "multiboot.h"
 #include "pit.h"
 #include "ps2.h"
@@ -25,8 +26,13 @@ void kmain(uint32_t magic, MultibootInfo *mbi) {
     PS2KBInit();
     printf("PS/2 Driver Initialized\n");
 
-    MemInit(mbi);
-    printf("Memory Initialized\n");
+    uint32_t mod1 = *(uint32_t *)(mbi->modsAddr + 4);
+    uint32_t physAllocStart = (mod1 + 0xFFF) & ~0xFFF;
+
+    MemInit(mbi->memU * 1024, physAllocStart);
+    KMallocInit(0x1000);
+
+    MemMapPage(0xC00B8000, 0xB8000, PAGE_FLAG_PRESENT | PAGE_FLAG_WRITE);
 
     while (1) {
         char buf[512];
