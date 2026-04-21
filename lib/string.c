@@ -14,3 +14,11 @@ void *memcpy(void *dest, const void *src, uint32_t n) {
 
     return dest;
 }
+
+int strcmp(const char *s1, const char *s2) {
+    while (*s1 && (*s1 == *s2)) {
+        s1++;
+        s2++;
+    }
+    return *(unsigned char *)s1 - *(unsigned char *)s2;
+}

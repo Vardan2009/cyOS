@@ -12,6 +12,20 @@
 #include "serial.h"
 #include "vga.h"
 
+void ATAInit() {
+    static ATADrive ataDrives[4];
+    const char *names[] = {"hda", "hdb", "hdc", "hdd"};
+
+    ataDrives[0] = (ATADrive){0x1F0, 0x3F6, 0};
+    ataDrives[1] = (ATADrive){0x1F0, 0x3F6, 1};
+    ataDrives[2] = (ATADrive){0x170, 0x376, 0};
+    ataDrives[3] = (ATADrive){0x170, 0x376, 1};
+
+    for (int i = 0; i < 4; i++)
+        if (ATADetect(&ataDrives[i]) == 0)
+            ATACreateBlockdev(&ataDrives[i], names[i]);
+}
+
 void kmain(uint32_t magic, MultibootInfo *mbi) {
     // enable SSE
     uint32_t cr4;
@@ -52,15 +66,7 @@ void kmain(uint32_t magic, MultibootInfo *mbi) {
            dt.second);
 
     printf("Detecting ATA drives...\n");
-
-    ATADrive drives[4];
-
-    drives[0] = (ATADrive){0x1F0, 0x3F6, 0};
-    drives[1] = (ATADrive){0x1F0, 0x3F6, 1};
-    drives[2] = (ATADrive){0x170, 0x376, 0};
-    drives[3] = (ATADrive){0x170, 0x376, 1};
-
-    for (int i = 0; i < 4; i++) ATADetect(&drives[i]);
+    ATAInit();
 
     while (1) {
         char buf[512];

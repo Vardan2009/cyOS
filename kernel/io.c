@@ -10,6 +10,10 @@ char inb(uint16_t port) {
     return r;
 }
 
+void outw(uint16_t port, uint16_t value) {
+    asm volatile("outw %1, %0" : : "dN"(port), "a"(value));
+}
+
 uint16_t inw(uint16_t port) {
     uint16_t r;
     asm volatile("inw %1, %0" : "=a"(r) : "dN"(port));
