@@ -1,5 +1,6 @@
 #include <stdio.h>
 
+#include "ata.h"
 #include "gdt.h"
 #include "idt.h"
 #include "kmalloc.h"
@@ -12,6 +13,12 @@
 #include "vga.h"
 
 void kmain(uint32_t magic, MultibootInfo *mbi) {
+    // enable SSE
+    uint32_t cr4;
+    asm volatile("mov %%cr4, %0" : "=r"(cr4));
+    cr4 |= (1 << 9) | (1 << 10);
+    asm volatile("mov %0, %%cr4" ::"r"(cr4));
+
     SerialInit(DBGPORT);
 
     VGAReset();
@@ -43,6 +50,17 @@ void kmain(uint32_t magic, MultibootInfo *mbi) {
 
     printf("%d/%d/%d %d:%d:%d\n", dt.day, dt.month, dt.year, dt.hour, dt.minute,
            dt.second);
+
+    printf("Detecting ATA drives...\n");
+
+    ATADrive drives[4];
+
+    drives[0] = (ATADrive){0x1F0, 0x3F6, 0};
+    drives[1] = (ATADrive){0x1F0, 0x3F6, 1};
+    drives[2] = (ATADrive){0x170, 0x376, 0};
+    drives[3] = (ATADrive){0x170, 0x376, 1};
+
+    for (int i = 0; i < 4; i++) ATADetect(&drives[i]);
 
     while (1) {
         char buf[512];

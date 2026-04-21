@@ -40,6 +40,6 @@ clean:
 	rm -rf $(BUILDDIR)
 
 emu: $(BUILDDIR)/cy.iso
-	$(EMU) $(EMUFLAGS) $(BUILDDIR)/cy.iso
+	$(EMU) $(EMUFLAGS) -drive file=$(BUILDDIR)/cy.iso,format=raw,media=disk
 
 -include $(DEPS)
