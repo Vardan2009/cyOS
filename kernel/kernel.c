@@ -68,6 +68,25 @@ void kmain(uint32_t magic, MultibootInfo *mbi) {
     printf("Detecting ATA drives...\n");
     ATAInit();
 
+    uint8_t sector[512];
+    BlockDevice *bd = BlkDevFind("hda");
+    BlkDevRead(bd, 0, 1, sector);
+
+    for (int i = 0; i < 512; i += 16) {
+        printf("%04x  ", i);
+
+        for (int j = 0; j < 16; j++) printf("%02x ", sector[i + j]);
+
+        printf(" ");
+
+        for (int j = 0; j < 16; j++) {
+            uint8_t c = sector[i + j];
+            printf("%c", (c >= 32 && c < 127) ? c : '.');
+        }
+
+        printf("\n");
+    }
+
     while (1) {
         char buf[512];
 
