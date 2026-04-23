@@ -4,6 +4,7 @@
 #include "gdt.h"
 #include "idt.h"
 #include "kmalloc.h"
+#include "mbr.h"
 #include "memory.h"
 #include "multiboot.h"
 #include "pit.h"
@@ -72,7 +73,11 @@ void kmain(uint32_t magic, MultibootInfo *mbi) {
     BlockDevice *bd = BlkDevFind("hda");
     BlkDevRead(bd, 0, 1, sector);
 
-    for (int i = 0; i < 512; i += 16) {
+    MBR *mbr = (MBR *)&sector;
+
+    MBRPrint(mbr);
+
+    /* for (int i = 0; i < 512; i += 16) {
         printf("%04x  ", i);
 
         for (int j = 0; j < 16; j++) printf("%02x ", sector[i + j]);
@@ -85,7 +90,7 @@ void kmain(uint32_t magic, MultibootInfo *mbi) {
         }
 
         printf("\n");
-    }
+    } */
 
     while (1) {
         char buf[512];
