@@ -43,8 +43,6 @@ void KMallocInit(uint32_t initialHeapSize) {
     heapHead->next = NULL;
     heapHead->prev = NULL;
 
-    printf("test %d\n", *heapHead);
-
     printf("Heap start: %x\nHeap size:  %d\n", heapStart, heapSize);
 }
 
