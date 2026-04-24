@@ -7,6 +7,7 @@
 #include "mbr.h"
 #include "memory.h"
 #include "multiboot.h"
+#include "pci.h"
 #include "pit.h"
 #include "ps2.h"
 #include "rtc.h"
@@ -25,6 +26,11 @@ void ATAInit() {
     for (int i = 0; i < 4; i++)
         if (ATADetect(&ataDrives[i]) == 0)
             ATACreateBlockdev(&ataDrives[i], names[i]);
+}
+
+void PCICallback(PCIDevice *dev) {
+    printf("- PCI Device: Vendor: %x, Device: %x\n", dev->vendorID,
+           dev->deviceID);
 }
 
 void kmain(uint32_t magic, MultibootInfo *mbi) {
@@ -76,6 +82,8 @@ void kmain(uint32_t magic, MultibootInfo *mbi) {
     MBR *mbr = (MBR *)&sector;
 
     MBRPrint(mbr);
+
+    PCIEnumerate(PCICallback);
 
     /* for (int i = 0; i < 512; i += 16) {
         printf("%04x  ", i);
