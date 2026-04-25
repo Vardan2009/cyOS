@@ -22,3 +22,22 @@ int strcmp(const char *s1, const char *s2) {
     }
     return *(unsigned char *)s1 - *(unsigned char *)s2;
 }
+
+int memcmp(const void *ptr1, const void *ptr2, uint32_t num) {
+    const unsigned char *p1 = (const unsigned char *)ptr1;
+    const unsigned char *p2 = (const unsigned char *)ptr2;
+
+    for (uint32_t i = 0; i < num; i++)
+        if (p1[i] != p2[i]) return (p1[i] < p2[i]) ? -1 : 1;
+
+    return 0;
+}
+
+char *strchr(const char *str, int c) {
+    while (*str) {
+        if (*str == c) return (char *)str;
+        str++;
+    }
+    if (c == '\0') return (char *)str;
+    return NULL;
+}

@@ -4,23 +4,26 @@ LD       = clang
 EMU      = qemu-system-x86_64
 BUILDDIR = build
 
-CINCLUDES = -Ilib -Ikernel -Idev -Iboot -Iarch/x86 -Imm
+CINCLUDES = -Ilib -Ikernel -Idev -Iboot -Iarch/x86 -Imm -Ifs
 CCFLAGS   = -g -target i686-unknown-none-elf -ffreestanding -nostdlib -fno-builtin -fno-stack-protector -m32 $(CINCLUDES)
 DEPFLAGS  = -MMD -MP
 ASMFLAGS  = -felf32
 EMUFLAGS  = -serial mon:stdio #-S -s
 LDFLAGS = -target i686-unknown-none-elf -m32 -nostdlib -T boot/linker.ld -fuse-ld=lld -Wl,-z,notext
 
-C_SRCS   := $(wildcard kernel/*.c dev/*.c lib/*.c arch/x86/*.c mm/*.c)
+C_SRCS   := $(wildcard kernel/*.c dev/*.c lib/*.c arch/x86/*.c mm/*.c fs/**/*.c fs/*.c)
 ASM_SRCS := $(wildcard boot/*.s arch/x86/*.s)
 C_OBJS   := $(patsubst %.c, $(BUILDDIR)/%.c.o, $(C_SRCS))
 ASM_OBJS := $(patsubst %.s, $(BUILDDIR)/%.s.o, $(ASM_SRCS))
 OBJS     := $(C_OBJS) $(ASM_OBJS)
 DEPS     := $(C_OBJS:.o=.d)
 
+IMG      := $(BUILDDIR)/cy.img
+IMG_SIZE := 64 # mb
+
 .PHONY: all clean emu
 
-all: $(BUILDDIR)/cy.iso
+all: $(IMG)
 
 $(BUILDDIR)/%.c.o: %.c
 	mkdir -p $(dir $@)
@@ -30,16 +33,29 @@ $(BUILDDIR)/%.s.o: %.s
 	mkdir -p $(dir $@)
 	$(ASM) $(ASMFLAGS) $< -o $@
 
-$(BUILDDIR)/cy.iso: $(OBJS)
+$(IMG): $(OBJS)
 	mkdir -p $(BUILDDIR)/image/boot/grub
 	cp boot/grub/grub.cfg $(BUILDDIR)/image/boot/grub/grub.cfg
 	$(LD) $(LDFLAGS) -o $(BUILDDIR)/image/boot/kernel $(OBJS)
-	grub-mkrescue -o $@ $(BUILDDIR)/image
+	dd if=/dev/zero of=$(IMG) bs=1M count=$(IMG_SIZE)
+	parted -s $(IMG) mklabel msdos
+	parted -s $(IMG) mkpart primary fat32 1MiB 100%
+	parted -s $(IMG) set 1 boot on
+	@LODEV=$$(sudo losetup -f --show -P $(IMG)); \
+	sudo mkfs.fat -F32 $${LODEV}p1; \
+	sudo mkdir -p /mnt/cyimg; \
+	sudo mount $${LODEV}p1 /mnt/cyimg; \
+	sudo cp -r $(BUILDDIR)/image/. /mnt/cyimg/; \
+	sudo grub-install --target=i386-pc \
+	    --boot-directory=/mnt/cyimg/boot \
+	    --no-floppy $${LODEV}; \
+	sudo umount /mnt/cyimg; \
+	sudo losetup -d $${LODEV}
 
 clean:
 	rm -rf $(BUILDDIR)
 
-emu: $(BUILDDIR)/cy.iso
-	$(EMU) $(EMUFLAGS) -drive file=$(BUILDDIR)/cy.iso,format=raw,media=disk
+emu: $(IMG)
+	$(EMU) $(EMUFLAGS) -drive file=$(IMG),format=raw,media=disk
 
 -include $(DEPS)

@@ -33,6 +33,40 @@ void PCICallback(PCIDevice *dev) {
            dev->deviceID);
 }
 
+#include "fatfs/ff.h"
+
+void FSTest() {
+    FATFS fs;
+    FIL file;
+    BYTE buf[128];
+
+    UINT bytesWritten, bytesRead;
+
+    FRESULT res = f_mount(&fs, "0:", 1);
+    if (res != FR_OK) {
+        printf("Mount failed: %d\n", res);
+        return;
+    }
+
+    f_open(&file, "0:/hello.txt", FA_CREATE_ALWAYS | FA_WRITE);
+    f_write(&file, "Hello from cyOS!\n", 18, &bytesWritten);
+    f_close(&file);
+
+    f_open(&file, "0:/hello.txt", FA_READ);
+    f_read(&file, buf, sizeof(buf) - 1, &bytesRead);
+    buf[bytesRead] = '\0';
+    f_close(&file);
+
+    printf("Read: %s\n", buf);
+
+    DIR dir;
+    FILINFO fno;
+    f_opendir(&dir, "0:/");
+    while (f_readdir(&dir, &fno) == FR_OK && fno.fname[0])
+        printf("%s %d bytes\n", fno.fname, fno.fsize);
+    f_closedir(&dir);
+}
+
 void kmain(uint32_t magic, MultibootInfo *mbi) {
     // enable SSE
     uint32_t cr4;
@@ -99,6 +133,8 @@ void kmain(uint32_t magic, MultibootInfo *mbi) {
 
         printf("\n");
     } */
+
+    FSTest();
 
     while (1) {
         char buf[512];

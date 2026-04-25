@@ -15,6 +15,12 @@ typedef unsigned long long int uint64_t;
 
 typedef unsigned long int addr_t;
 
+// for fatfs
+typedef uint8_t BYTE;
+typedef unsigned long DWORD;
+typedef unsigned int UINT;
+typedef DWORD LBA_t;
+
 #define NULL 0
 
 #endif  // CY_STDINT_H
