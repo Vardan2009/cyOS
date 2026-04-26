@@ -1,6 +1,8 @@
 #include <stdio.h>
 
 #include "ata.h"
+#include "fatfs.h"
+#include "fatfs/ff.h"
 #include "gdt.h"
 #include "idt.h"
 #include "kmalloc.h"
@@ -24,47 +26,15 @@ void ATAInit() {
     ataDrives[3] = (ATADrive){0x170, 0x376, 1};
 
     for (int i = 0; i < 4; i++)
-        if (ATADetect(&ataDrives[i]) == 0)
-            ATACreateBlockdev(&ataDrives[i], names[i]);
+        if (ATADetect(&ataDrives[i]) == 0) {
+            BlockDevice *dev = ATACreateBlockdev(&ataDrives[i], names[i]);
+            FatFsRegisterPartitions(i, dev);
+        }
 }
 
 void PCICallback(PCIDevice *dev) {
     printf("- PCI Device: Vendor: %x, Device: %x\n", dev->vendorID,
            dev->deviceID);
-}
-
-#include "fatfs/ff.h"
-
-void FSTest() {
-    FATFS fs;
-    FIL file;
-    BYTE buf[128];
-
-    UINT bytesWritten, bytesRead;
-
-    FRESULT res = f_mount(&fs, "0:", 1);
-    if (res != FR_OK) {
-        printf("Mount failed: %d\n", res);
-        return;
-    }
-
-    f_open(&file, "0:/hello.txt", FA_CREATE_ALWAYS | FA_WRITE);
-    f_write(&file, "Hello from cyOS!\n", 18, &bytesWritten);
-    f_close(&file);
-
-    f_open(&file, "0:/hello.txt", FA_READ);
-    f_read(&file, buf, sizeof(buf) - 1, &bytesRead);
-    buf[bytesRead] = '\0';
-    f_close(&file);
-
-    printf("Read: %s\n", buf);
-
-    DIR dir;
-    FILINFO fno;
-    f_opendir(&dir, "0:/");
-    while (f_readdir(&dir, &fno) == FR_OK && fno.fname[0])
-        printf("%s %d bytes\n", fno.fname, fno.fsize);
-    f_closedir(&dir);
 }
 
 void kmain(uint32_t magic, MultibootInfo *mbi) {
@@ -109,32 +79,7 @@ void kmain(uint32_t magic, MultibootInfo *mbi) {
     printf("Detecting ATA drives...\n");
     ATAInit();
 
-    uint8_t sector[512];
-    BlockDevice *bd = BlkDevFind("hda");
-    BlkDevRead(bd, 0, 1, sector);
-
-    MBR *mbr = (MBR *)&sector;
-
-    MBRPrint(mbr);
-
     PCIEnumerate(PCICallback);
-
-    /* for (int i = 0; i < 512; i += 16) {
-        printf("%04x  ", i);
-
-        for (int j = 0; j < 16; j++) printf("%02x ", sector[i + j]);
-
-        printf(" ");
-
-        for (int j = 0; j < 16; j++) {
-            uint8_t c = sector[i + j];
-            printf("%c", (c >= 32 && c < 127) ? c : '.');
-        }
-
-        printf("\n");
-    } */
-
-    FSTest();
 
     while (1) {
         char buf[512];

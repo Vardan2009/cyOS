@@ -21,6 +21,9 @@ DEPS     := $(C_OBJS:.o=.d)
 IMG      := $(BUILDDIR)/cy.img
 IMG_SIZE := 64 # mb
 
+DATADIR  := datadir
+IMG_SIZE := 1024
+
 .PHONY: all clean emu
 
 all: $(IMG)
@@ -39,10 +42,12 @@ $(IMG): $(OBJS)
 	$(LD) $(LDFLAGS) -o $(BUILDDIR)/image/boot/kernel $(OBJS)
 	dd if=/dev/zero of=$(IMG) bs=1M count=$(IMG_SIZE)
 	parted -s $(IMG) mklabel msdos
-	parted -s $(IMG) mkpart primary fat32 1MiB 100%
+	parted -s $(IMG) mkpart primary fat32 1MiB 512MiB
 	parted -s $(IMG) set 1 boot on
+	parted -s $(IMG) mkpart primary fat32 512MiB 100%
 	@LODEV=$$(sudo losetup -f --show -P $(IMG)); \
 	sudo mkfs.fat -F32 $${LODEV}p1; \
+	sudo mkfs.fat -F32 $${LODEV}p2; \
 	sudo mkdir -p /mnt/cyimg; \
 	sudo mount $${LODEV}p1 /mnt/cyimg; \
 	sudo cp -r $(BUILDDIR)/image/. /mnt/cyimg/; \
@@ -50,6 +55,10 @@ $(IMG): $(OBJS)
 	    --boot-directory=/mnt/cyimg/boot \
 	    --no-floppy $${LODEV}; \
 	sudo umount /mnt/cyimg; \
+	sudo mkdir -p /mnt/cydata; \
+	sudo mount $${LODEV}p2 /mnt/cydata; \
+	sudo cp -r $(DATADIR)/. /mnt/cydata/; \
+	sudo umount /mnt/cydata; \
 	sudo losetup -d $${LODEV}
 
 clean:

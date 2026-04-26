@@ -1,11 +1,44 @@
+#include <stdio.h>
+
 #include "blockdev.h"
 #include "datetime.h"
 #include "fatfs/diskio.h"
 #include "fatfs/ff.h"
+#include "mbr.h"
 #include "rtc.h"
 
 static const char *driveNames[] = {"hda", "hdb", "hdc", "hdd"};
 #define MAX_DRIVES 4
+
+PARTITION VolToPart[FF_VOLUMES];
+static uint32_t partitionLBAStart[FF_VOLUMES];
+
+void FatFsRegisterPartitions(BYTE pdrv, BlockDevice *dev) {
+    static int vol = 0;
+
+    MBR mbr;
+    if (MBRRead(dev, &mbr) < 0) {
+        if (vol < FF_VOLUMES) {
+            VolToPart[vol].pd = pdrv;
+            VolToPart[vol].pt = 0;
+            printf("Volume %d, drive %d (whole disk)\n", vol, pdrv);
+            vol++;
+        }
+        return;
+    }
+
+    for (int i = 0; i < 4 && vol < FF_VOLUMES; i++) {
+        MBRPartitionEntry *p = &mbr.partitions[i];
+        if (p->partitionType == PART_TYPE_EMPTY) continue;
+        if (p->partitionType == PART_TYPE_LINUX) continue;
+        if (p->partitionType == PART_TYPE_EXTENDED) continue;
+
+        VolToPart[vol].pd = pdrv;
+        VolToPart[vol].pt = i + 1;
+        printf("Volume %d, drive %d MBR partition %d\n", vol, pdrv, i + 1);
+        vol++;
+    }
+}
 
 static BlockDevice *get_drive(BYTE pdrv) {
     if (pdrv >= MAX_DRIVES) return NULL;
@@ -29,8 +62,7 @@ DRESULT disk_read(BYTE pdrv, BYTE *buf, LBA_t sector, UINT count) {
     BlockDevice *dev = get_drive(pdrv);
     if (!dev) return RES_NOTRDY;
 
-    if (BlkDevRead(dev, (uint64_t)sector, (uint32_t)count, buf) < 0)
-        return RES_ERROR;
+    if (BlkDevRead(dev, (uint64_t)sector, count, buf) < 0) return RES_ERROR;
 
     return RES_OK;
 }
@@ -39,8 +71,7 @@ DRESULT disk_write(BYTE pdrv, const BYTE *buf, LBA_t sector, UINT count) {
     BlockDevice *dev = get_drive(pdrv);
     if (!dev) return RES_NOTRDY;
 
-    if (BlkDevWrite(dev, (uint64_t)sector, (uint32_t)count, buf) < 0)
-        return RES_ERROR;
+    if (BlkDevWrite(dev, (uint64_t)sector, count, buf) < 0) return RES_ERROR;
 
     return RES_OK;
 }
