@@ -44,8 +44,6 @@ static inline void write(const char *text) {
 }
 
 void _start() {
-    write("Hello from first cyOS user program!\n");
-    int ec = exec("1:/second.elf");
-    write("Second exited\n");
-    exit(ec);
+    write("Loaded second program!\n");
+    exit(777);
 }

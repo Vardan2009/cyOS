@@ -41,15 +41,15 @@ void ProcessMapPage(uint32_t *pdPhys, uint32_t vaddr, uint32_t paddr,
 #define USER_CODE_SEG 0x1B
 #define USER_DATA_SEG 0x23
 
-uint32_t returnEbp = 0;
-
 void ProcessExecute(Process *proc) {
     uint32_t kstack = (uint32_t)kmalloc(0x2000) + 0x2000;
     proc->kernelStack = kstack;
     TSSSetKernelStack(kstack);
+
+    proc->parent = currentProcess;
     currentProcess = proc;
 
-    asm volatile("mov %%ebp, %0" : "=m"(returnEbp));
+    asm volatile("mov %%ebp, %0" : "=m"(proc->returnEbp));
 
     asm volatile("mov %0, %%cr3" ::"r"(proc->pageDir));
 

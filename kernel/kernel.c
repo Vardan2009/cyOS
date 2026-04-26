@@ -100,14 +100,13 @@ void kmain(uint32_t magic, MultibootInfo *mbi) {
     } else {
         printf("Executing with entry %x\n", proc->entry);
         ProcessExecute(proc);
+        kfree(proc);
     }
 
     while (1) {
         char buf[512];
 
-        printf("$ ");
+        printf("KERNEL $ ");
         scanl(buf, 512);
-
-        printf("==> %s\n", buf);
     }
 }

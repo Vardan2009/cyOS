@@ -32,10 +32,11 @@ Process *ELFLoad(const char *path) {
     ELFHeader hdr;
     f_read(&file, &hdr, sizeof(hdr), &bytesRead);
 
-    printf(
-        "=== ELF Header ===\n - Magic: %x\n - Class: %x\n - Type: %x\n - "
-        "Architecture: %x\n",
-        hdr.magic, hdr.class, hdr.type, hdr.arch);
+    /* printf(
+         "=== ELF Header ===\n - Magic: %x\n - Class: %x\n - Type: %x\n - "
+         "Architecture: %x\n",
+         hdr.magic, hdr.class, hdr.type, hdr.arch);
+ */
 
     if (hdr.magic != ELF_MAGIC || hdr.class != ELF_CLASS_32 ||
         hdr.type != ELF_TYPE_EXEC || hdr.arch != ELF_ARCH_X86) {
@@ -72,8 +73,8 @@ Process *ELFLoad(const char *path) {
             return NULL;
         }
 
-        printf("ELF: loading segment vaddr=0x%x size=0x%x flags=%x\n", ph.vaddr,
-               ph.memSize, ph.flags);
+        /* printf("ELF: loading segment vaddr=0x%x size=0x%x flags=%x\n",
+           ph.vaddr, ph.memSize, ph.flags); */
 
         uint32_t flags = PAGE_FLAG_OWNER;
         if (ph.flags & PF_W) flags |= PAGE_FLAG_WRITE;

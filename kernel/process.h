@@ -9,12 +9,15 @@
 #define USER_STACK_TOP 0xBFFFF000
 #define USER_STACK_SIZE 0x5000
 
-typedef struct {
+typedef struct _Process {
     uint32_t *pageDir;
     uint32_t entry;
     uint32_t stackTop;
     uint32_t kernelStack;
     int exitCode;
+
+    uint32_t returnEbp;
+    struct _Process *parent;
 } Process;
 
 extern Process *currentProcess;
