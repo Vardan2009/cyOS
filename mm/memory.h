@@ -10,6 +10,7 @@
 
 #define PAGE_FLAG_PRESENT (1 << 0)
 #define PAGE_FLAG_WRITE (1 << 1)
+#define PAGE_FLAG_USER (1 << 2)
 #define PAGE_FLAG_OWNER (1 << 9)
 
 extern uint32_t initialPageDir[1024];

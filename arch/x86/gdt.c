@@ -56,3 +56,5 @@ void TSSWrite(uint32_t num, uint16_t ss0, uint32_t esp0) {
     tssEntry.ss = tssEntry.ds = tssEntry.es = tssEntry.fs = tssEntry.gs =
         0x10 | 0x3;
 }
+
+void TSSSetKernelStack(uint32_t esp0) { tssEntry.esp0 = esp0; }

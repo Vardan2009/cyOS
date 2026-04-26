@@ -57,4 +57,6 @@ void GDTSetGate(uint32_t num, uint32_t base, uint32_t limit, uint8_t access,
 
 void TSSWrite(uint32_t num, uint16_t ss0, uint32_t esp0);
 
+void TSSSetKernelStack(uint32_t esp0);
+
 #endif  // CY_GDT_H

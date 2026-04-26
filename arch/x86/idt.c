@@ -133,18 +133,30 @@ const char *excMessages[] = {"Division By Zero",
                              "Reserved",
                              "Reserved"};
 
+#include <stdio.h>
+
 void ISRHandler(IntRegs *regs) {
     if (regs->intno < 32) {
-        VGAPrint("\n===   EXCEPTION   ===\n");
-        VGAPrint(excMessages[regs->intno]);
-        VGAPrint("\n=== SYSTEM HALTED ===\n");
+        if (regs->intno != 14) {
+            VGAPrint("\n===   EXCEPTION   ===\n");
+            VGAPrint(excMessages[regs->intno]);
+            VGAPrint("\n=== SYSTEM HALTED ===\n");
 
-        SerialWriteStr(DBGPORT, "\n===   EXCEPTION   ===\n");
-        SerialWriteStr(DBGPORT, excMessages[regs->intno]);
-        SerialWriteStr(DBGPORT, "\n=== SYSTEM HALTED ===\n");
-
+            SerialWriteStr(DBGPORT, "\n===   EXCEPTION   ===\n");
+            SerialWriteStr(DBGPORT, excMessages[regs->intno]);
+            SerialWriteStr(DBGPORT, "\n=== SYSTEM HALTED ===\n");
+        } else {
+            printf("PAGE FAULT at 0x%x\n", regs->cr2);
+            printf("  %s\n",
+                   (regs->errno & 1) ? "protection violation" : "not present");
+            printf("  %s\n", (regs->errno & 2) ? "write" : "read");
+            printf("  %s\n", (regs->errno & 4) ? "user mode" : "kernel mode");
+            printf("  %s\n", (regs->errno & 8) ? "reserved bit set" : "");
+        }
         while (1);
     }
+
+    if (regs->intno == 0x80) printf("Syscall hit!");
 }
 
 void *irqRoutines[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};

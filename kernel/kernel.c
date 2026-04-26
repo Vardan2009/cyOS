@@ -1,16 +1,17 @@
 #include <stdio.h>
 
 #include "ata.h"
+#include "elf.h"
 #include "fatfs.h"
 #include "fatfs/ff.h"
 #include "gdt.h"
 #include "idt.h"
 #include "kmalloc.h"
-#include "mbr.h"
 #include "memory.h"
 #include "multiboot.h"
 #include "pci.h"
 #include "pit.h"
+#include "process.h"
 #include "ps2.h"
 #include "rtc.h"
 #include "serial.h"
@@ -80,6 +81,24 @@ void kmain(uint32_t magic, MultibootInfo *mbi) {
     ATAInit();
 
     PCIEnumerate(PCICallback);
+
+    FATFS fs1;
+    f_mount(&fs1, "1:", 1);
+
+    DIR dir;
+    FILINFO fno;
+    f_opendir(&dir, "1:/");
+    while (f_readdir(&dir, &fno) == FR_OK && fno.fname[0])
+        printf("1:/%s\n", fno.fname);
+    f_closedir(&dir);
+
+    Process *proc = ELFLoad("1:/first.elf");
+    if (!proc) {
+        printf("Failed to load ELF!\n");
+    } else {
+        printf("Executing with entry %x\n", proc->entry);
+        ProcessExecute(proc);
+    }
 
     while (1) {
         char buf[512];
