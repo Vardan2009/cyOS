@@ -129,3 +129,12 @@ void MemInit(uint32_t memHigh, uint32_t physAllocStart) {
     memset(pageDirs, 0, 0x1000 * NUM_PAGES_DIRS);
     memset(pageDirUsed, 0, NUM_PAGES_DIRS);
 }
+
+void PMMFreePageFrame(uint32_t addr) {
+    uint32_t frame = addr / 0x1000;
+    uint32_t b = frame / 8;
+    uint32_t i = frame % 8;
+
+    physMemBitmap[b] &= ~(1 << i);
+    --totalAlloc;
+}

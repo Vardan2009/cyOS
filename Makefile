@@ -12,7 +12,7 @@ EMUFLAGS  = -serial mon:stdio #-S -s
 LDFLAGS = -target i686-unknown-none-elf -m32 -nostdlib -T boot/linker.ld -fuse-ld=lld -Wl,-z,notext
 
 C_SRCS   := $(wildcard kernel/*.c dev/*.c lib/*.c arch/x86/*.c mm/*.c fs/**/*.c fs/*.c)
-ASM_SRCS := $(wildcard boot/*.s arch/x86/*.s)
+ASM_SRCS := $(wildcard boot/*.s arch/x86/*.s kernel/*.s)
 C_OBJS   := $(patsubst %.c, $(BUILDDIR)/%.c.o, $(C_SRCS))
 ASM_OBJS := $(patsubst %.s, $(BUILDDIR)/%.s.o, $(ASM_SRCS))
 OBJS     := $(C_OBJS) $(ASM_OBJS)

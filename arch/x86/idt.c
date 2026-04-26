@@ -155,8 +155,6 @@ void ISRHandler(IntRegs *regs) {
         }
         while (1);
     }
-
-    if (regs->intno == 0x80) printf("Syscall hit!");
 }
 
 void *irqRoutines[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};

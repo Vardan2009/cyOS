@@ -23,4 +23,6 @@ void Invalidate(uint32_t vaddr);
 
 void MemMapPage(uint32_t vaddr, uint32_t paddr, uint32_t flags);
 
+void PMMFreePageFrame(uint32_t addr);
+
 #endif  // CY_PMM_H

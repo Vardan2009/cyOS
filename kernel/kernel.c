@@ -15,6 +15,7 @@
 #include "ps2.h"
 #include "rtc.h"
 #include "serial.h"
+#include "syscall.h"
 #include "vga.h"
 
 void ATAInit() {
@@ -56,6 +57,7 @@ void kmain(uint32_t magic, MultibootInfo *mbi) {
 
     IDTInit();
     printf("IDT Initialized\n");
+    SyscallInit();
 
     PITInit();
     printf("PIT Initialized\n");

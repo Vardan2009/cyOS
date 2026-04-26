@@ -13,12 +13,17 @@ typedef struct {
     uint32_t *pageDir;
     uint32_t entry;
     uint32_t stackTop;
+    uint32_t kernelStack;
+    int exitCode;
 } Process;
+
+extern Process *currentProcess;
 
 uint32_t *ProcessCreateAddressSpace();
 void ProcessMapPage(uint32_t *pdPhys, uint32_t vaddr, uint32_t paddr,
                     uint32_t flags);
 
 void ProcessExecute(Process *proc);
+void ProcessFreePages(Process *proc);
 
 #endif  // CY_PROCESS_H

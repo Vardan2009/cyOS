@@ -1,9 +1,10 @@
-// process.c
 #include "process.h"
 
 #include <string.h>
 
 #include "memory.h"
+
+Process *currentProcess = NULL;
 
 uint32_t *ProcessCreateAddressSpace() {
     uint32_t *pdPhys = (uint32_t *)PMMAllocPageFrame();
@@ -40,9 +41,15 @@ void ProcessMapPage(uint32_t *pdPhys, uint32_t vaddr, uint32_t paddr,
 #define USER_CODE_SEG 0x1B
 #define USER_DATA_SEG 0x23
 
+uint32_t returnEbp = 0;
+
 void ProcessExecute(Process *proc) {
     uint32_t kstack = (uint32_t)kmalloc(0x2000) + 0x2000;
+    proc->kernelStack = kstack;
     TSSSetKernelStack(kstack);
+    currentProcess = proc;
+
+    asm volatile("mov %%ebp, %0" : "=m"(returnEbp));
 
     asm volatile("mov %0, %%cr3" ::"r"(proc->pageDir));
 
@@ -63,4 +70,29 @@ void ProcessExecute(Process *proc) {
         "iretl              \n" ::"r"((uint32_t)USER_DATA_SEG),
         "r"(proc->stackTop), "r"((uint32_t)USER_CODE_SEG), "r"(proc->entry)
         : "eax");
+}
+
+void ProcessFreePages(Process *proc) {
+    uint32_t old_cr3;
+    asm volatile("mov %%cr3, %0" : "=r"(old_cr3));
+    asm volatile("mov %0, %%cr3" ::"r"(proc->pageDir));
+
+    for (int i = 0; i < 768; i++) {
+        if (!(REC_PAGEDIR[i] & PAGE_FLAG_PRESENT)) continue;
+
+        uint32_t *pt = REC_PAGETABLE(i);
+        for (int j = 0; j < 1024; j++) {
+            if ((pt[j] & PAGE_FLAG_PRESENT) && (pt[j] & PAGE_FLAG_OWNER)) {
+                PMMFreePageFrame(pt[j] & ~0xFFF);
+                pt[j] = 0;
+            }
+        }
+
+        PMMFreePageFrame(REC_PAGEDIR[i] & ~0xFFF);
+        REC_PAGEDIR[i] = 0;
+    }
+
+    asm volatile("mov %0, %%cr3" ::"r"(old_cr3));
+
+    PMMFreePageFrame((uint32_t)proc->pageDir);
 }
