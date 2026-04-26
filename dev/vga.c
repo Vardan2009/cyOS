@@ -60,6 +60,9 @@ void VGAPrintC(char c) {
         case '\r':
             column = 0;
             break;
+        case '\b':
+            VGABackspace();
+            break;
         case '\t':
             if (column == VGA_WIDTH) VGALineBreak();
             uint16_t tabl = 4 - (column % 4);

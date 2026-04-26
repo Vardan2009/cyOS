@@ -3,7 +3,11 @@
 
 #define SYSCALL_EXIT 1
 #define SYSCALL_EXEC 2
-#define SYSCALL_WRITE 3
+#define SYSCALL_READ 3
+#define SYSCALL_WRITE 4
+#define SYSCALL_OPEN 5
+#define SYSCALL_CLOSE 6
+#define SYSCALL_SEEK 7
 
 typedef struct {
     uint32_t edi;

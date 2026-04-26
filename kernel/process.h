@@ -3,8 +3,7 @@
 
 #include <stdint.h>
 
-// #define USER_STACK_TOP 0xBFFFFFFF
-// #define USER_STACK_SIZE 0x4000
+#include "fd.h"
 
 #define USER_STACK_TOP 0xBFFFF000
 #define USER_STACK_SIZE 0x5000
@@ -18,6 +17,8 @@ typedef struct _Process {
 
     uint32_t returnEbp;
     struct _Process *parent;
+
+    FileDescriptor fds[FD_MAX];
 } Process;
 
 extern Process *currentProcess;

@@ -3,12 +3,13 @@
 #include <stdio.h>
 
 #include "elf.h"
+#include "fd.h"
+#include "filefd.h"
 #include "gdt.h"
 #include "idt.h"
 #include "kmalloc.h"
 #include "memory.h"
 #include "process.h"
-#include "vga.h"
 
 extern void SyscallStub();
 
@@ -69,7 +70,17 @@ static uint32_t SysExec(const char *path) {
     return ec;
 }
 
-static void SysWrite(const char *text) { VGAPrint(text); }
+static int SysOpen(const char *path, uint32_t flags) {
+    if ((uint32_t)path >= KERNEL_START) return -1;
+
+    int slot = FDAlloc(currentProcess);
+    if (slot < 0) return -1;
+
+    if (FDOpenFile(&currentProcess->fds[slot], path, (uint8_t)flags) < 0)
+        return -1;
+
+    return slot;
+}
 
 uint32_t SyscallDispatch(SyscallRegs *regs) {
     switch (regs->eax) {
@@ -80,9 +91,23 @@ uint32_t SyscallDispatch(SyscallRegs *regs) {
         case SYSCALL_EXEC:
             return SysExec((const char *)regs->ebx);
 
+        case SYSCALL_READ:
+            return (uint32_t)FDRead(currentProcess, (int)regs->ebx,
+                                    (void *)regs->ecx, regs->edx);
         case SYSCALL_WRITE:
-            SysWrite((const char *)regs->ebx);
-            return 0;
+            return (uint32_t)FDWrite(currentProcess, (int)regs->ebx,
+                                     (const void *)regs->ecx, regs->edx);
+        case SYSCALL_OPEN:
+            return (uint32_t)SysOpen((const char *)regs->ebx, regs->ecx);
+
+        case SYSCALL_CLOSE:
+            return (uint32_t)FDClose(currentProcess, (int)regs->ebx);
+        case SYSCALL_SEEK:
+            if (regs->ebx >= FD_MAX) return (uint32_t)-1;
+            FileDescriptor *fd = &currentProcess->fds[regs->ebx];
+            if (!fd->ops.seek) return (uint32_t)-1;
+            return (uint32_t)fd->ops.seek(fd, (int32_t)regs->ecx,
+                                          (int)regs->edx);
 
         default:
             printf("Unknown syscall %u\n", regs->eax);

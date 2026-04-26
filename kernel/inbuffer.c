@@ -13,7 +13,7 @@ void InBufferPutC(char c) {
 }
 
 char InBufferGetC() {
-    if (bufferStart == bufferEnd) return 0;
+    while (bufferStart == bufferEnd);
     char c = inputBuffer[bufferStart];
     bufferStart = (bufferStart + 1) % INPUT_BUFFER_SIZE;
     return c;

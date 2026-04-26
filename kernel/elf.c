@@ -20,6 +20,8 @@ static void AllocUserRange(uint32_t *pdPhys, uint32_t vaddr, uint32_t size,
     }
 }
 
+#include "fd.h"
+
 Process *ELFLoad(const char *path) {
     FIL file;
     UINT bytesRead;
@@ -104,5 +106,11 @@ Process *ELFLoad(const char *path) {
     proc->pageDir = pdPhys;
     proc->entry = hdr.entry;
     proc->stackTop = USER_STACK_TOP;
+
+    if (currentProcess)
+        FDInherit(proc, currentProcess);
+    else
+        FDInitProcess(proc);
+
     return proc;
 }
