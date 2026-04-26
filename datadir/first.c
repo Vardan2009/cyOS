@@ -51,6 +51,14 @@ static inline uint32_t syscall3(uint32_t num, uint32_t a1, uint32_t a2,
 #define FD_STDOUT 1
 #define FD_STDERR 2
 
+#define FA_READ 0x01
+#define FA_WRITE 0x02
+
+#define O_RDONLY FA_READ
+#define O_WRONLY FA_WRITE
+#define O_RDWR (FA_READ | FA_WRITE)
+#define O_CREAT FA_CREATE_ALWAYS
+
 static inline void exit(int code) { syscall1(SYSCALL_EXIT, (uint32_t)code); }
 
 static inline int exec(const char *path) {
@@ -92,7 +100,7 @@ static inline char *gets(char *buf, int size) {
 }
 
 void _start() {
-    char buf[512];
+    char buf[4096];
 
     puts("Hello! What is your name?: ");
 
@@ -101,6 +109,19 @@ void _start() {
         puts(buf);
         puts("!\n");
     }
+
+    puts("This is my source code!\n");
+
+    int fd = open("1:/first.c", O_RDONLY);
+
+    int br = read(fd, buf, sizeof(buf));
+
+    buf[br] = NULL;
+
+    puts(buf);
+    puts("\n");
+
+    close(fd);
 
     exit(7);
 }
