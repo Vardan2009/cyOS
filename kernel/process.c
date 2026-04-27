@@ -35,7 +35,7 @@ void ProcessMapPage(uint32_t *pdPhys, uint32_t vaddr, uint32_t paddr,
     asm volatile("mov %0, %%cr3" ::"r"(oldcr3));
 }
 
-#include <stdio.h>
+#include <kmalloc.h>
 #include <string.h>
 
 static uint32_t ProcessBuildStack(Process *proc) {
@@ -61,7 +61,7 @@ static uint32_t ProcessBuildStack(Process *proc) {
         stack -= len;
         memcpy(stack, proc->argv[i], len);
         argPtrs[i] = (uint32_t)stack;
-        printf("i: %d --- argv[i]: %s\n", i, proc->argv[i]);
+        kfree(proc->argv[i]);
     }
 
     stack = (uint8_t *)((uint32_t)stack & ~3);
@@ -126,6 +126,12 @@ void ProcessExecute(Process *proc) {
         "pushl %%eax        \n"
         "pushl %2           \n"
         "pushl %3           \n"
+        "xorl %%eax, %%eax  \n"
+        "xorl %%ebx, %%ebx  \n"
+        "xorl %%ecx, %%ecx  \n"
+        "xorl %%edx, %%edx  \n"
+        "xorl %%esi, %%esi  \n"
+        "xorl %%edi, %%edi  \n"
         "iretl              \n" ::"r"((uint32_t)USER_DATA_SEG),
         "r"(useresp), "r"((uint32_t)USER_CODE_SEG), "r"(proc->entry)
         : "eax");

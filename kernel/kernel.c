@@ -98,7 +98,6 @@ void kmain(uint32_t magic, MultibootInfo *mbi) {
     if (!proc) {
         printf("Failed to load ELF!\n");
     } else {
-        printf("Executing with entry %x\n", proc->entry);
         ProcessExecute(proc);
         kfree(proc);
     }

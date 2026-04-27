@@ -58,6 +58,8 @@ static void SysExit(uint32_t code) {
         "ret            \n" ::"r"(savedEbp));
 }
 
+#include <string.h>
+
 static uint32_t SysExec(const char *path, char **userargv) {
     if ((uint32_t)path >= KERNEL_START) return (uint32_t)-1;
 
@@ -68,20 +70,22 @@ static uint32_t SysExec(const char *path, char **userargv) {
         int i = 0;
         while (i < PROCESS_MAX_ARGS && userargv[i]) {
             if ((uint32_t)userargv[i] >= KERNEL_START) break;
-            child->argv[i] = userargv[i];
+            char *pstrdup = kmalloc(strlen(userargv[i]) + 1);
+            memcpy(pstrdup, userargv[i], strlen(userargv[i]) + 1);
+            child->argv[i] = pstrdup;
             ++i;
         }
         child->argc = i;
     }
 
     Process *parent = currentProcess;
-    uint32_t parent_return = parent ? parent->returnEbp : 0;
+    uint32_t parentReturn = parent ? parent->returnEbp : 0;
 
     ProcessExecute(child);
 
     if (parent) {
         currentProcess = parent;
-        parent->returnEbp = parent_return;
+        parent->returnEbp = parentReturn;
         asm volatile("mov %0, %%cr3" ::"r"(parent->pageDir));
         TSSSetKernelStack(parent->kernelStack);
     }
