@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "syscall.h"
@@ -23,7 +24,10 @@ int main(int argc, char **argv) {
         if (token == NULL) continue;
 
         while (token != NULL && i < MAX_ARGS - 1) {
-            pargv[i++] = token;
+            if (token[0] != '$')
+                pargv[i++] = token;
+            else
+                pargv[i++] = getenv(token + 1);
             token = strtok(NULL, " ");
         }
         pargv[i] = NULL;
