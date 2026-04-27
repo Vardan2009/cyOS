@@ -17,4 +17,7 @@ typedef unsigned long int addr_t;
 
 #define NULL 0
 
+typedef int32_t ssize_t;
+typedef uint32_t size_t;
+
 #endif  // CYLIBC_STDINT_H

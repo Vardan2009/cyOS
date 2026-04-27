@@ -1,14 +1,14 @@
 #include <stdio.h>
 
 int main(int argc, char **argv) {
-    puts("Hello, world!\n");
+    printf("Hello, world!\n");
 
-    puts("argv: \n");
+    printf("argv: \n");
 
     for (int i = 0; i < argc; ++i) {
-        puts(" - ");
-        puts(argv[i]);
-        puts("\n");
+        printf(" - ");
+        printf(argv[i]);
+        printf("\n");
     }
 
     return 0;

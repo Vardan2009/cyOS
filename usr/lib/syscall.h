@@ -30,11 +30,16 @@ static inline uint32_t syscall3(uint32_t num, uint32_t a1, uint32_t a2,
 
 #define SYSCALL_EXIT 1
 #define SYSCALL_EXEC 2
+
 #define SYSCALL_READ 3
 #define SYSCALL_WRITE 4
 #define SYSCALL_OPEN 5
 #define SYSCALL_CLOSE 6
 #define SYSCALL_SEEK 7
+
+#define SYSCALL_GETENV 8
+#define SYSCALL_SETENV 9
+#define SYSCALL_UNSETENV 10
 
 void exit(int code);
 

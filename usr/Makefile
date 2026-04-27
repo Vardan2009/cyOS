@@ -2,7 +2,7 @@ CC        := clang
 ASM       := nasm
 ASFLAGS   := -felf32
 
-CFLAGS    := -target i686-elf -O0 -static -nostdlib -fno-pic -fno-pie -Wl,-no-pie
+CFLAGS    := -target i686-elf -O0 -static -nostdlib -fno-builtin -fno-pic -fno-pie -Wl,-no-pie
 INCLUDES  := -Ilib
 SRC_DIR   := src
 LIB_DIR   := lib

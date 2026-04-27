@@ -28,6 +28,8 @@ static void SysExit(uint32_t code) {
     ProcessFreePages(proc);
     kfree((void *)(savedKstack - 0x2000));
 
+    for (int i = 0; i < proc->envc; ++i) kfree(proc->envp[i]);
+
     currentProcess = parent;
 
     if (parent == NULL) {
@@ -105,6 +107,35 @@ static int SysOpen(const char *path, uint32_t flags) {
     return slot;
 }
 
+#include "env.h"
+
+static uint32_t SysGetEnv(const char *key, char *buf, uint32_t bufsz) {
+    if ((uint32_t)key >= KERNEL_START) return 0;
+    if ((uint32_t)buf >= KERNEL_START) return 0;
+
+    char *val = EnvGet(currentProcess, key);
+    if (!val) return 0;
+
+    uint32_t len = strlen(val);
+    if (len >= bufsz) len = bufsz - 1;
+    memcpy(buf, val, len);
+    buf[len] = '\0';
+    return len;
+}
+
+static uint32_t SysSetEnv(const char *key, const char *value) {
+    if ((uint32_t)key >= KERNEL_START) return (uint32_t)-1;
+    if ((uint32_t)value >= KERNEL_START) return (uint32_t)-1;
+    EnvSet(currentProcess, key, value);
+    return 0;
+}
+
+static uint32_t SysUnsetEnv(const char *key) {
+    if ((uint32_t)key >= KERNEL_START) return (uint32_t)-1;
+    EnvUnset(currentProcess, key);
+    return 0;
+}
+
 uint32_t SyscallDispatch(SyscallRegs *regs) {
     switch (regs->eax) {
         case SYSCALL_EXIT:
@@ -125,12 +156,21 @@ uint32_t SyscallDispatch(SyscallRegs *regs) {
 
         case SYSCALL_CLOSE:
             return (uint32_t)FDClose(currentProcess, (int)regs->ebx);
+
         case SYSCALL_SEEK:
             if (regs->ebx >= FD_MAX) return (uint32_t)-1;
             FileDescriptor *fd = &currentProcess->fds[regs->ebx];
             if (!fd->ops.seek) return (uint32_t)-1;
             return (uint32_t)fd->ops.seek(fd, (int32_t)regs->ecx,
                                           (int)regs->edx);
+
+        case SYSCALL_GETENV:
+            return SysGetEnv((const char *)regs->ebx, (char *)regs->ecx,
+                             regs->edx);
+        case SYSCALL_SETENV:
+            return SysSetEnv((const char *)regs->ebx, (const char *)regs->ecx);
+        case SYSCALL_UNSETENV:
+            return SysUnsetEnv((const char *)regs->ebx);
 
         default:
             printf("Unknown syscall %u\n", regs->eax);

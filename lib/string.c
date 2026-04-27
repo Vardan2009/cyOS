@@ -23,6 +23,15 @@ int strcmp(const char *s1, const char *s2) {
     return *(unsigned char *)s1 - *(unsigned char *)s2;
 }
 
+int strncmp(const char *s1, const char *s2, uint32_t n) {
+    while (n && *s1 && (*s1 == *s2)) {
+        s1++;
+        s2++;
+        n--;
+    }
+    return n == 0 ? 0 : *(unsigned char *)s1 - *(unsigned char *)s2;
+}
+
 int memcmp(const void *ptr1, const void *ptr2, uint32_t num) {
     const unsigned char *p1 = (const unsigned char *)ptr1;
     const unsigned char *p2 = (const unsigned char *)ptr2;
@@ -46,4 +55,34 @@ uint32_t strlen(const char *s) {
     const char *p = s;
     while (*p) p++;
     return (uint32_t)(p - s);
+}
+
+char *strcpy(char *dest, const char *src) {
+    char *ptr = dest;
+    while ((*ptr++ = *src++)) {
+    }
+    return dest;
+}
+
+char *strncpy(char *dest, const char *src, uint32_t n) {
+    char *ptr = dest;
+    while (n > 0 && *src) {
+        *ptr++ = *src++;
+        --n;
+    }
+    while (n > 0) {
+        *ptr++ = '\0';
+        --n;
+    }
+    return dest;
+}
+
+char *strcat(char *dest, const char *src) {
+    char *ptr = dest;
+    while (*ptr) {
+        ptr++;
+    }
+    while ((*ptr++ = *src++)) {
+    }
+    return dest;
 }

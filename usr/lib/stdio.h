@@ -1,9 +1,7 @@
 #ifndef CYLIBC_STDIO_H
 #define CYLIBC_STDIO_H
 
-#include <stdint.h>
-
-#include "syscall.h"
+#include <stdarg.h>
 
 #define FD_STDIN 0
 #define FD_STDOUT 1
@@ -17,22 +15,13 @@
 #define O_RDWR (FA_READ | FA_WRITE)
 #define O_CREAT FA_CREATE_ALWAYS
 
-static inline void puts(const char *s) {
-    uint32_t len = 0;
-    while (s[len]) len++;
-    write(FD_STDOUT, s, len);
-}
+void puts(const char *s);
+char *gets(char *buf, int size);
 
-static inline char *gets(char *buf, int size) {
-    int n = read(FD_STDIN, buf, size - 1);
-    if (n <= 0) {
-        buf[0] = '\0';
-        return buf;
-    }
-
-    if (buf[n - 1] == '\n') n--;
-    buf[n] = '\0';
-    return buf;
-}
+int vfprintf(int fd, const char *fmt, va_list args);
+int vfprintf(int fd, const char *fmt, va_list args);
+int printf(const char *fmt, ...);
+int fprintf(int fd, const char *fmt, ...);
+int scanf(const char *fmt, ...);
 
 #endif  // CYLIBC_STDIO_H

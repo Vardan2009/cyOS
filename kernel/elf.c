@@ -20,6 +20,7 @@ static void AllocUserRange(uint32_t *pdPhys, uint32_t vaddr, uint32_t size,
     }
 }
 
+#include "env.h"
 #include "fd.h"
 
 Process *ELFLoad(const char *path) {
@@ -108,9 +109,10 @@ Process *ELFLoad(const char *path) {
     proc->entry = hdr.entry;
     proc->stackTop = USER_STACK_TOP;
 
-    if (currentProcess)
+    if (currentProcess) {
         FDInherit(proc, currentProcess);
-    else
+        EnvInherit(proc, currentProcess);
+    } else
         FDInitProcess(proc);
 
     return proc;

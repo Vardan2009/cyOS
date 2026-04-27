@@ -3,7 +3,7 @@
 #include "syscall.h"
 
 int main(int argc, char **argv) {
-    puts("Welcome to cyOS!\n\n");
+    printf("Welcome to cyOS!\n\n");
 
     const char *shargv[] = {"1:/bin/shell", NULL};
 
