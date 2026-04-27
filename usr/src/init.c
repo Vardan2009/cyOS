@@ -2,10 +2,12 @@
 
 #include "syscall.h"
 
-void _start() {
+int main(int argc, char **argv) {
     puts("Welcome to cyOS!\n\n");
 
-    exec("1:/bin/shell");
+    const char *shargv[] = {"1:/bin/shell", NULL};
 
-    exit(0);
+    exec("1:/bin/shell", (char **)shargv);
+
+    return 0;
 }

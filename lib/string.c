@@ -41,3 +41,9 @@ char *strchr(const char *str, int c) {
     if (c == '\0') return (char *)str;
     return NULL;
 }
+
+uint32_t strlen(const char *s) {
+    const char *p = s;
+    while (*p) p++;
+    return (uint32_t)(p - s);
+}

@@ -8,6 +8,9 @@
 #define USER_STACK_TOP 0xBFFFF000
 #define USER_STACK_SIZE 0x5000
 
+#define PROCESS_MAX_ARGS 32
+#define PROCESS_MAX_ENV 32
+
 typedef struct _Process {
     uint32_t *pageDir;
     uint32_t entry;
@@ -19,6 +22,11 @@ typedef struct _Process {
     struct _Process *parent;
 
     FileDescriptor fds[FD_MAX];
+
+    char *argv[PROCESS_MAX_ARGS];
+    char *envp[PROCESS_MAX_ENV];
+    int argc;
+    int envc;
 } Process;
 
 extern Process *currentProcess;

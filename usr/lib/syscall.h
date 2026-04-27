@@ -36,10 +36,10 @@ static inline uint32_t syscall3(uint32_t num, uint32_t a1, uint32_t a2,
 #define SYSCALL_CLOSE 6
 #define SYSCALL_SEEK 7
 
-static inline void exit(int code) { syscall1(SYSCALL_EXIT, (uint32_t)code); }
+void exit(int code);
 
-static inline int exec(const char *path) {
-    return (int)syscall1(SYSCALL_EXEC, (uint32_t)path);
+static inline int exec(const char *path, char **argv) {
+    return (int)syscall2(SYSCALL_EXEC, (uint32_t)path, (uint32_t)argv);
 }
 
 static inline int open(const char *path, int flags) {

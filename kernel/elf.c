@@ -103,6 +103,7 @@ Process *ELFLoad(const char *path) {
                    PAGE_FLAG_WRITE | PAGE_FLAG_OWNER);
 
     Process *proc = kmalloc(sizeof(Process));
+    memset(proc, 0, sizeof(Process));
     proc->pageDir = pdPhys;
     proc->entry = hdr.entry;
     proc->stackTop = USER_STACK_TOP;

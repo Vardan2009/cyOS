@@ -58,16 +58,35 @@ static void SysExit(uint32_t code) {
         "ret            \n" ::"r"(savedEbp));
 }
 
-static uint32_t SysExec(const char *path) {
-    Process *proc = ELFLoad(path);
-    if (!proc) return -1;
+static uint32_t SysExec(const char *path, char **userargv) {
+    if ((uint32_t)path >= KERNEL_START) return (uint32_t)-1;
 
-    ProcessExecute(proc);
+    Process *child = ELFLoad(path);
+    if (!child) return (uint32_t)-1;
 
-    uint32_t ec = proc->exitCode;
-    kfree(proc);
+    if (userargv) {
+        int i = 0;
+        while (i < PROCESS_MAX_ARGS && userargv[i]) {
+            if ((uint32_t)userargv[i] >= KERNEL_START) break;
+            child->argv[i] = userargv[i];
+            ++i;
+        }
+        child->argc = i;
+    }
 
-    return ec;
+    Process *parent = currentProcess;
+    uint32_t parent_return = parent ? parent->returnEbp : 0;
+
+    ProcessExecute(child);
+
+    if (parent) {
+        currentProcess = parent;
+        parent->returnEbp = parent_return;
+        asm volatile("mov %0, %%cr3" ::"r"(parent->pageDir));
+        TSSSetKernelStack(parent->kernelStack);
+    }
+
+    return 0;
 }
 
 static int SysOpen(const char *path, uint32_t flags) {
@@ -89,7 +108,7 @@ uint32_t SyscallDispatch(SyscallRegs *regs) {
             return 0;
 
         case SYSCALL_EXEC:
-            return SysExec((const char *)regs->ebx);
+            return SysExec((const char *)regs->ebx, (char **)regs->ecx);
 
         case SYSCALL_READ:
             return (uint32_t)FDRead(currentProcess, (int)regs->ebx,

@@ -35,6 +35,65 @@ void ProcessMapPage(uint32_t *pdPhys, uint32_t vaddr, uint32_t paddr,
     asm volatile("mov %0, %%cr3" ::"r"(oldcr3));
 }
 
+#include <stdio.h>
+#include <string.h>
+
+static uint32_t ProcessBuildStack(Process *proc) {
+    uint32_t oldcr3;
+    asm volatile("mov %%cr3, %0" : "=r"(oldcr3));
+    asm volatile("mov %0, %%cr3" ::"r"(proc->pageDir));
+
+    uint8_t *stack = (uint8_t *)proc->stackTop;
+
+    uint32_t envPtrs[PROCESS_MAX_ENV];
+    for (int i = proc->envc - 1; i >= 0; i--) {
+        if (!proc->envp[i]) continue;
+        int len = strlen(proc->envp[i]) + 1;
+        stack -= len;
+        memcpy(stack, proc->envp[i], len);
+        envPtrs[i] = (uint32_t)stack;
+    }
+
+    uint32_t argPtrs[PROCESS_MAX_ARGS];
+    for (int i = proc->argc - 1; i >= 0; i--) {
+        if (!proc->argv[i]) continue;
+        int len = strlen(proc->argv[i]) + 1;
+        stack -= len;
+        memcpy(stack, proc->argv[i], len);
+        argPtrs[i] = (uint32_t)stack;
+        printf("i: %d --- argv[i]: %s\n", i, proc->argv[i]);
+    }
+
+    stack = (uint8_t *)((uint32_t)stack & ~3);
+
+    stack -= 4;
+    *(uint32_t *)stack = 0;
+    for (int i = proc->envc - 1; i >= 0; i--) {
+        stack -= 4;
+        *(uint32_t *)stack = envPtrs[i];
+    }
+    uint32_t envpAddr = (uint32_t)stack;
+
+    stack -= 4;
+    *(uint32_t *)stack = 0;
+    for (int i = proc->argc - 1; i >= 0; i--) {
+        stack -= 4;
+        *(uint32_t *)stack = argPtrs[i];
+    }
+    uint32_t argvAddr = (uint32_t)stack;
+
+    stack -= 4;
+    *(uint32_t *)stack = envpAddr;
+    stack -= 4;
+    *(uint32_t *)stack = argvAddr;
+    stack -= 4;
+
+    *(uint32_t *)stack = (uint32_t)proc->argc;
+
+    asm volatile("mov %0, %%cr3" ::"r"(oldcr3));
+    return (uint32_t)stack;
+}
+
 #include "gdt.h"
 #include "kmalloc.h"
 
@@ -45,12 +104,12 @@ void ProcessExecute(Process *proc) {
     uint32_t kstack = (uint32_t)kmalloc(0x2000) + 0x2000;
     proc->kernelStack = kstack;
     TSSSetKernelStack(kstack);
-
     proc->parent = currentProcess;
     currentProcess = proc;
 
-    asm volatile("mov %%ebp, %0" : "=m"(proc->returnEbp));
+    uint32_t useresp = ProcessBuildStack(proc);
 
+    asm volatile("mov %%ebp, %0" : "=m"(proc->returnEbp));
     asm volatile("mov %0, %%cr3" ::"r"(proc->pageDir));
 
     asm volatile(
@@ -68,7 +127,7 @@ void ProcessExecute(Process *proc) {
         "pushl %2           \n"
         "pushl %3           \n"
         "iretl              \n" ::"r"((uint32_t)USER_DATA_SEG),
-        "r"(proc->stackTop), "r"((uint32_t)USER_CODE_SEG), "r"(proc->entry)
+        "r"(useresp), "r"((uint32_t)USER_CODE_SEG), "r"(proc->entry)
         : "eax");
 }
 

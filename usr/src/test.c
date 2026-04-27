@@ -1,6 +1,15 @@
 #include <stdio.h>
 
-void _start() {
+int main(int argc, char **argv) {
     puts("Hello, world!\n");
-    exit(0);
+
+    puts("argv: \n");
+
+    for (int i = 0; i < argc; ++i) {
+        puts(" - ");
+        puts(argv[i]);
+        puts("\n");
+    }
+
+    return 0;
 }
