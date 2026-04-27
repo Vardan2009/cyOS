@@ -94,7 +94,7 @@ void kmain(uint32_t magic, MultibootInfo *mbi) {
         printf("1:/%s\n", fno.fname);
     f_closedir(&dir);
 
-    Process *proc = ELFLoad("1:/first.elf");
+    Process *proc = ELFLoad("1:/bin/init");
     if (!proc) {
         printf("Failed to load ELF!\n");
     } else {

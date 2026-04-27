@@ -21,7 +21,7 @@ DEPS     := $(C_OBJS:.o=.d)
 IMG      := $(BUILDDIR)/cy.img
 IMG_SIZE := 64 # mb
 
-DATADIR  := datadir
+DATADIR  := usr
 IMG_SIZE := 1024
 
 .PHONY: all clean emu
@@ -37,6 +37,7 @@ $(BUILDDIR)/%.s.o: %.s
 	$(ASM) $(ASMFLAGS) $< -o $@
 
 $(IMG): $(OBJS)
+	$(MAKE) -C $(DATADIR)
 	mkdir -p $(BUILDDIR)/image/boot/grub
 	cp boot/grub/grub.cfg $(BUILDDIR)/image/boot/grub/grub.cfg
 	$(LD) $(LDFLAGS) -o $(BUILDDIR)/image/boot/kernel $(OBJS)
@@ -62,6 +63,7 @@ $(IMG): $(OBJS)
 	sudo losetup -d $${LODEV}
 
 clean:
+	$(MAKE) -C $(DATADIR) clean
 	rm -rf $(BUILDDIR)
 
 emu: $(IMG)

@@ -1,18 +1,7 @@
-typedef signed char int8_t;
-typedef unsigned char uint8_t;
+#ifndef CYLIBC_SYSCALL_H
+#define CYLIBC_SYSCALL_H
 
-typedef signed short int16_t;
-typedef unsigned short uint16_t;
-
-typedef signed long int int32_t;
-typedef unsigned long int uint32_t;
-
-typedef signed long long int int64_t;
-typedef unsigned long long int uint64_t;
-
-typedef unsigned long int addr_t;
-
-#define NULL 0
+#include <stdint.h>
 
 static inline uint32_t syscall1(uint32_t num, uint32_t a1) {
     uint32_t ret;
@@ -47,18 +36,6 @@ static inline uint32_t syscall3(uint32_t num, uint32_t a1, uint32_t a2,
 #define SYSCALL_CLOSE 6
 #define SYSCALL_SEEK 7
 
-#define FD_STDIN 0
-#define FD_STDOUT 1
-#define FD_STDERR 2
-
-#define FA_READ 0x01
-#define FA_WRITE 0x02
-
-#define O_RDONLY FA_READ
-#define O_WRONLY FA_WRITE
-#define O_RDWR (FA_READ | FA_WRITE)
-#define O_CREAT FA_CREATE_ALWAYS
-
 static inline void exit(int code) { syscall1(SYSCALL_EXIT, (uint32_t)code); }
 
 static inline int exec(const char *path) {
@@ -81,47 +58,4 @@ static inline int write(int fd, const void *buf, uint32_t count) {
     return (int)syscall3(SYSCALL_WRITE, (uint32_t)fd, (uint32_t)buf, count);
 }
 
-static inline void puts(const char *s) {
-    uint32_t len = 0;
-    while (s[len]) len++;
-    write(FD_STDOUT, s, len);
-}
-
-static inline char *gets(char *buf, int size) {
-    int n = read(FD_STDIN, buf, size - 1);
-    if (n <= 0) {
-        buf[0] = '\0';
-        return buf;
-    }
-
-    if (buf[n - 1] == '\n') n--;
-    buf[n] = '\0';
-    return buf;
-}
-
-void _start() {
-    char buf[4096];
-
-    puts("Hello! What is your name?: ");
-
-    if (gets(buf, 512)) {
-        puts("Hello, ");
-        puts(buf);
-        puts("!\n");
-    }
-
-    puts("This is my source code!\n");
-
-    int fd = open("1:/first.c", O_RDONLY);
-
-    int br = read(fd, buf, sizeof(buf));
-
-    buf[br] = NULL;
-
-    puts(buf);
-    puts("\n");
-
-    close(fd);
-
-    exit(7);
-}
+#endif  // CYLIBC_SYSCALL_H
