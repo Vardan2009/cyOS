@@ -65,3 +65,43 @@ int memcmp(const void *a, const void *b, size_t n) {
     }
     return 0;
 }
+
+size_t strcspn(const char *s, const char *reject) {
+    const char *p = s;
+    while (*p != '\0') {
+        const char *r = reject;
+        while (*r != '\0') {
+            if (*p == *r) return (size_t)(p - s);
+            r++;
+        }
+        p++;
+    }
+    return (size_t)(p - s);
+}
+
+char *strtok(char *str, const char *delim) {
+    static char *lastToken = NULL;
+
+    if (str != NULL) lastToken = str;
+
+    if (lastToken == NULL || *lastToken == '\0') return NULL;
+
+    char *tokenStart = lastToken;
+    while (*tokenStart && strchr(delim, *tokenStart)) ++tokenStart;
+
+    if (*tokenStart == '\0') {
+        lastToken = NULL;
+        return NULL;
+    }
+
+    char *tokenEnd = tokenStart;
+    while (*tokenEnd && !strchr(delim, *tokenEnd)) ++tokenEnd;
+
+    if (*tokenEnd != '\0') {
+        *tokenEnd = '\0';
+        lastToken = tokenEnd + 1;
+    } else
+        lastToken = NULL;
+
+    return tokenStart;
+}
