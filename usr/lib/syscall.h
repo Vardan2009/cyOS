@@ -41,6 +41,8 @@ static inline uint32_t syscall3(uint32_t num, uint32_t a1, uint32_t a2,
 #define SYSCALL_SETENV 9
 #define SYSCALL_UNSETENV 10
 
+#define SYSCALL_SBRK 11
+
 void exit(int code);
 
 static inline int exec(const char *path, char **argv) {
@@ -61,6 +63,10 @@ static inline int read(int fd, void *buf, uint32_t count) {
 
 static inline int write(int fd, const void *buf, uint32_t count) {
     return (int)syscall3(SYSCALL_WRITE, (uint32_t)fd, (uint32_t)buf, count);
+}
+
+static void *sbrk(int32_t inc) {
+    return (void *)syscall1(SYSCALL_SBRK, (uint32_t)inc);
 }
 
 #endif  // CYLIBC_SYSCALL_H

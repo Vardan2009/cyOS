@@ -27,6 +27,8 @@ typedef struct _Process {
     char *envp[PROCESS_MAX_ENV];
     int argc;
     int envc;
+
+    uint32_t heapBreak;
 } Process;
 
 extern Process *currentProcess;

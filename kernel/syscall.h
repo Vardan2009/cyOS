@@ -14,6 +14,8 @@
 #define SYSCALL_SETENV 9
 #define SYSCALL_UNSETENV 10
 
+#define SYSCALL_SBRK 11
+
 typedef struct {
     uint32_t edi;
     uint32_t esi;

@@ -50,6 +50,8 @@ Process *ELFLoad(const char *path) {
 
     uint32_t *pdPhys = ProcessCreateAddressSpace();
 
+    uint32_t heapBreak = 0;
+
     for (int i = 0; i < hdr.ph_count; i++) {
         ELFProgramHeader ph;
 
@@ -94,9 +96,14 @@ Process *ELFLoad(const char *path) {
             memset((void *)(ph.vaddr + ph.fileSize), 0,
                    ph.memSize - ph.fileSize);
 
+        uint32_t segEnd = ph.vaddr + ph.memSize;
+        if (segEnd > heapBreak) heapBreak = segEnd;
+
         asm volatile("mov %0, %%cr3" ::"r"(old_cr3));
         kfree(kbuf);
     }
+
+    heapBreak = (heapBreak + 0xFFF) & ~0xFFF;
 
     f_close(&file);
 
@@ -108,6 +115,7 @@ Process *ELFLoad(const char *path) {
     proc->pageDir = pdPhys;
     proc->entry = hdr.entry;
     proc->stackTop = USER_STACK_TOP;
+    proc->heapBreak = heapBreak;
 
     if (currentProcess) {
         FDInherit(proc, currentProcess);

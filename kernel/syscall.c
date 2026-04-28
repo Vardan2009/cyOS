@@ -136,6 +136,29 @@ static uint32_t SysUnsetEnv(const char *key) {
     return 0;
 }
 
+static uint32_t SysSbrk(int32_t increment) {
+    Process *proc = currentProcess;
+    uint32_t oldBrk = proc->heapBreak;
+    uint32_t newBrk = oldBrk + increment;
+
+    if (newBrk >= USER_STACK_TOP - USER_STACK_SIZE) {
+        printf("sbrk: process out of memory\n");
+        return (uint32_t)-1;
+    }
+
+    uint32_t oldPage = (oldBrk + 0xFFF) & ~0xFFF;
+    uint32_t newPage = (newBrk + 0xFFF) & ~0xFFF;
+
+    for (uint32_t p = oldPage; p < newPage; p += 0x1000) {
+        uint32_t frame = PMMAllocPageFrame();
+        ProcessMapPage(proc->pageDir, p, frame,
+                       PAGE_FLAG_PRESENT | PAGE_FLAG_WRITE | PAGE_FLAG_USER);
+    }
+
+    proc->heapBreak = newBrk;
+    return oldBrk;
+}
+
 uint32_t SyscallDispatch(SyscallRegs *regs) {
     switch (regs->eax) {
         case SYSCALL_EXIT:
@@ -171,6 +194,9 @@ uint32_t SyscallDispatch(SyscallRegs *regs) {
             return SysSetEnv((const char *)regs->ebx, (const char *)regs->ecx);
         case SYSCALL_UNSETENV:
             return SysUnsetEnv((const char *)regs->ebx);
+
+        case SYSCALL_SBRK:
+            return SysSbrk(regs->ebx);
 
         default:
             printf("Unknown syscall %u\n", regs->eax);
