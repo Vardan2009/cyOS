@@ -30,7 +30,7 @@
 #define VGA_CHAR(CH, COL) ((CH) | (COL))
 
 void VGAPrintC(char c);
-void VGAPrint(const char *s);
+void VGAPrint(char *s);
 void VGAScroll();
 void VGABackspace();
 

@@ -80,7 +80,7 @@ void VGAPrintC(char c) {
     VGASetCurPos(line * VGA_WIDTH + column);
 }
 
-void VGAPrint(const char *s) {
+void VGAPrint(char *s) {
     while (*s) VGAPrintC(*(s++));
 }
 

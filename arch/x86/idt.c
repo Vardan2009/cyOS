@@ -138,9 +138,9 @@ const char *excMessages[] = {"Division By Zero",
 void ISRHandler(IntRegs *regs) {
     if (regs->intno < 32) {
         if (regs->intno != 14) {
-            VGAPrint("\n===   EXCEPTION   ===\n");
-            VGAPrint(excMessages[regs->intno]);
-            VGAPrint("\n=== SYSTEM HALTED ===\n");
+            printf("\n===   EXCEPTION   ===\n");
+            printf(excMessages[regs->intno]);
+            printf("\n=== SYSTEM HALTED ===\n");
 
             SerialWriteStr(DBGPORT, "\n===   EXCEPTION   ===\n");
             SerialWriteStr(DBGPORT, excMessages[regs->intno]);

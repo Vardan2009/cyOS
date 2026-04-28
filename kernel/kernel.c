@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 #include "ata.h"
+#include "console.h"
 #include "elf.h"
 #include "fatfs.h"
 #include "fatfs/ff.h"
@@ -45,6 +46,9 @@ void kmain(uint32_t magic, MultibootInfo *mbi) {
     asm volatile("mov %%cr4, %0" : "=r"(cr4));
     cr4 |= (1 << 9) | (1 << 10);
     asm volatile("mov %0, %%cr4" ::"r"(cr4));
+
+    ConsolePutC = VGAPrintC;
+    ConsolePutS = VGAPrint;
 
     SerialInit(DBGPORT);
 

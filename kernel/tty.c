@@ -1,8 +1,8 @@
 #include <string.h>
 
+#include "console.h"
 #include "fd.h"
 #include "inbuffer.h"
-#include "vga.h"
 
 #define TTY_BUFSZ 256
 
@@ -24,20 +24,20 @@ static int TTYRead(FileDescriptor *fd, void *out, uint32_t count) {
             case '\b':
                 if (ttyLine.len > 0) {
                     ttyLine.len--;
-                    VGABackspace();
+                    ConsolePutC('\b');
                 }
                 break;
 
             case 21:
                 while (ttyLine.len > 0) {
                     ttyLine.len--;
-                    VGABackspace();
+                    ConsolePutC('\b');
                 }
                 break;
 
             case '\n':
             case '\r':
-                VGAPrintC('\n');
+                ConsolePutC('\n');
                 ttyLine.buf[ttyLine.len++] = '\n';
 
                 uint32_t to_copy = ttyLine.len < count ? ttyLine.len : count;
@@ -49,7 +49,7 @@ static int TTYRead(FileDescriptor *fd, void *out, uint32_t count) {
             default:
                 if (c >= 32 && ttyLine.len < TTY_BUFSZ - 1) {
                     ttyLine.buf[ttyLine.len++] = c;
-                    VGAPrintC(c);
+                    ConsolePutC(c);
                 }
                 break;
         }
@@ -61,7 +61,7 @@ done:
 
 static int TTYWrite(FileDescriptor *fd, const void *buf, uint32_t count) {
     const char *src = (const char *)buf;
-    for (uint32_t i = 0; i < count; i++) VGAPrintC(src[i]);
+    for (uint32_t i = 0; i < count; i++) ConsolePutC(src[i]);
     return (int)count;
 }
 

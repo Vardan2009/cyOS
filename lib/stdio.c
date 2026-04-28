@@ -1,11 +1,11 @@
 #include <stdio.h>
 
+#include "console.h"
 #include "inbuffer.h"
-#include "vga.h"
 
 void printi(int value) {
     if (value < 0) {
-        VGAPrintC('-');
+        ConsolePutC('-');
         value = -value;
     }
 
@@ -17,7 +17,7 @@ void printi(int value) {
         value /= 10;
     } while (value > 0);
 
-    while (i > 0) VGAPrintC(buffer[--i]);
+    while (i > 0) ConsolePutC(buffer[--i]);
 }
 
 void printui(unsigned int value, int width, char padChar) {
@@ -31,7 +31,7 @@ void printui(unsigned int value, int width, char padChar) {
 
     while (i < width) buffer[i++] = padChar;
 
-    while (i > 0) VGAPrintC(buffer[--i]);
+    while (i > 0) ConsolePutC(buffer[--i]);
 }
 
 void printhx(unsigned int value, int width, char padChar) {
@@ -50,23 +50,23 @@ void printhx(unsigned int value, int width, char padChar) {
 
     while (i < width) buffer[i++] = padChar;
 
-    while (i > 0) VGAPrintC(buffer[--i]);
+    while (i > 0) ConsolePutC(buffer[--i]);
 }
 
 void printfloat(float value, int width, int precision, char padChar) {
     if (value < 0) {
-        VGAPrintC('-');
+        ConsolePutC('-');
         value = -value;
     }
     int intPart = (int)value;
     float fracPart = value - intPart;
 
     printi(intPart);
-    VGAPrintC('.');
+    ConsolePutC('.');
     for (int i = 0; i < precision; i++) {
         fracPart *= 10;
         int digit = (int)fracPart;
-        VGAPrintC(digit + '0');
+        ConsolePutC(digit + '0');
         fracPart -= digit;
     }
 }
@@ -91,7 +91,7 @@ void vprintf_impl(const char *format, va_list args) {
             switch (*p) {
                 case 's': {
                     char *str = va_arg(args, char *);
-                    VGAPrint(str);
+                    ConsolePutS(str);
                     break;
                 }
                 case 'd': {
@@ -106,7 +106,7 @@ void vprintf_impl(const char *format, va_list args) {
                 }
                 case 'c': {
                     int num = va_arg(args, int);
-                    VGAPrintC((char)num);
+                    ConsolePutC((char)num);
                     break;
                 }
                 case 'x': {
@@ -121,12 +121,12 @@ void vprintf_impl(const char *format, va_list args) {
                     break;
                 }
                 default:
-                    VGAPrintC('%');
-                    VGAPrintC(*p);
+                    ConsolePutC('%');
+                    ConsolePutC(*p);
                     break;
             }
         } else {
-            VGAPrintC(*p);
+            ConsolePutC(*p);
         }
     }
 }
@@ -148,20 +148,21 @@ void scanl(char *buffer, unsigned int size) {
         if (c == '\b') {
             if (i > 0) {
                 if (buffer[i - 1] == '\t')
-                    for (int i = 0; i < 4; ++i) VGABackspace();
+                    for (int i = 0; i < 4; ++i) ConsolePutC('\b');
+
                 else
-                    VGABackspace();
+                    ConsolePutC('\b');
                 i--;
             }
             continue;
         }
         if (c == '\0') continue;
         if (c == '\n' || i >= size - 1) {
-            VGAPrintC('\n');
+            ConsolePutC('\n');
             break;
         }
         buffer[i++] = c;
-        VGAPrintC(c);
+        ConsolePutC(c);
     }
     buffer[i] = '\0';
 }
