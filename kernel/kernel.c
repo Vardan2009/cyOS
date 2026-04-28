@@ -88,7 +88,9 @@ void kmain(uint32_t magic, MultibootInfo *mbi) {
 
     PCIEnumerate(PCICallback);
 
+    FATFS fs0;
     FATFS fs1;
+    f_mount(&fs0, "0:", 1);
     f_mount(&fs1, "1:", 1);
 
     DIR dir;
