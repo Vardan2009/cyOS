@@ -1,3 +1,5 @@
+#include "stdlib.h"
+
 #include <string.h>
 
 #include "syscall.h"
@@ -18,12 +20,65 @@ char *getenv(const char *key) {
 }
 
 int setenv(const char *key, const char *value, int overwrite) {
-    if (!overwrite && getenv(key)) return 0;
-    return (int)syscall2(SYSCALL_SETENV, (uint32_t)key, (uint32_t)value);
+    int klen = strlen(key);
+    int vlen = strlen(value);
+
+    char *entry = malloc(klen + vlen + 2);
+    if (!entry) return -1;
+
+    memcpy(entry, key, klen);
+    entry[klen] = '=';
+    memcpy(entry + klen + 1, value, vlen + 1);
+
+    for (int i = 0; environ && environ[i]; i++) {
+        if (strncmp(environ[i], key, klen) == 0 && environ[i][klen] == '=') {
+            if (!overwrite) {
+                free(entry);
+                return 0;
+            }
+
+            free(environ[i]);
+            environ[i] = entry;
+
+            syscall2(SYSCALL_SETENV, (uint32_t)key, (uint32_t)value);
+            return 0;
+        }
+    }
+
+    int count = 0;
+    while (environ && environ[count]) count++;
+
+    char **newenv = realloc(environ, sizeof(char *) * (count + 2));
+    if (!newenv) {
+        free(entry);
+        return -1;
+    }
+
+    environ = newenv;
+    environ[count] = entry;
+    environ[count + 1] = NULL;
+
+    syscall2(SYSCALL_SETENV, (uint32_t)key, (uint32_t)value);
+    return 0;
 }
 
 int unsetenv(const char *key) {
-    return (int)syscall1(SYSCALL_UNSETENV, (uint32_t)key);
+    int klen = strlen(key);
+
+    for (int i = 0; environ && environ[i]; i++) {
+        if (strncmp(environ[i], key, klen) == 0 && environ[i][klen] == '=') {
+            free(environ[i]);
+
+            for (int j = i; environ[j]; j++) {
+                environ[j] = environ[j + 1];
+            }
+
+            syscall1(SYSCALL_UNSETENV, (uint32_t)key);
+            return 0;
+        }
+    }
+
+    return 0;
 }
 
 int atoi(const char *s) {
@@ -118,4 +173,27 @@ void *realloc(void *ptr, size_t size) {
     memcpy(new, ptr, b->size);
     free(ptr);
     return new;
+}
+
+static void QsortSwap(uint8_t *a, uint8_t *b, size_t size) {
+    while (size--) {
+        uint8_t tmp = *a;
+        *a++ = *b;
+        *b++ = tmp;
+    }
+}
+
+void qsort(void *base, size_t count, size_t size,
+           int (*cmp)(const void *, const void *)) {
+    if (count < 2) return;
+    uint8_t *arr = (uint8_t *)base;
+
+    // insertion sort ( yeah no quicksort :) )
+    for (size_t i = 1; i < count; i++) {
+        size_t j = i;
+        while (j > 0 && cmp(arr + (j - 1) * size, arr + j * size) > 0) {
+            QsortSwap(arr + (j - 1) * size, arr + j * size, size);
+            --j;
+        }
+    }
 }

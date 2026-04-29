@@ -19,9 +19,13 @@ void puts(const char *s);
 char *gets(char *buf, int size);
 
 int vfprintf(int fd, const char *fmt, va_list args);
-int vfprintf(int fd, const char *fmt, va_list args);
-int printf(const char *fmt, ...);
 int fprintf(int fd, const char *fmt, ...);
+
+int printf(const char *fmt, ...);
+
+int vsnprintf(char *buf, int size, const char *fmt, va_list args);
+int snprintf(char *buf, int size, const char *fmt, ...);
+
 int scanf(const char *fmt, ...);
 
-#endif  // CYLIBC_STDIO_H
+#endif  // CY_STDIO_H

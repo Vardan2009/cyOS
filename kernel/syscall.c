@@ -2,13 +2,16 @@
 
 #include <stdio.h>
 
+#include "dirfd.h"
 #include "elf.h"
+#include "fatfs/ff.h"
 #include "fd.h"
 #include "filefd.h"
 #include "gdt.h"
 #include "idt.h"
 #include "kmalloc.h"
 #include "memory.h"
+#include "path.h"
 #include "process.h"
 
 extern void SyscallStub();
@@ -65,7 +68,10 @@ static void SysExit(uint32_t code) {
 static uint32_t SysExec(const char *path, char **userargv) {
     if ((uint32_t)path >= KERNEL_START) return (uint32_t)-1;
 
-    Process *child = ELFLoad(path);
+    char resolved[PATH_MAX];
+    if (PathResolve(currentProcess->cwd, path, resolved) < 0) return -1;
+
+    Process *child = ELFLoad(resolved);
     if (!child) return (uint32_t)-1;
 
     if (userargv) {
@@ -101,8 +107,23 @@ static int SysOpen(const char *path, uint32_t flags) {
     int slot = FDAlloc(currentProcess);
     if (slot < 0) return -1;
 
-    if (FDOpenFile(&currentProcess->fds[slot], path, (uint8_t)flags) < 0)
+    if (FDOpenRelative(&currentProcess->fds[slot], path, (uint8_t)flags,
+                       currentProcess->cwd) < 0)
         return -1;
+
+    return slot;
+}
+
+static int SysOpenDir(const char *path) {
+    if ((uint32_t)path >= KERNEL_START) return -1;
+
+    char resolved[PATH_MAX];
+    if (PathResolve(currentProcess->cwd, path, resolved) < 0) return -1;
+
+    int slot = FDAlloc(currentProcess);
+    if (slot < 0) return -1;
+
+    if (FDOpenDir(&currentProcess->fds[slot], resolved) < 0) return -1;
 
     return slot;
 }
@@ -159,6 +180,49 @@ static uint32_t SysSbrk(int32_t increment) {
     return oldBrk;
 }
 
+static int SysGetCWD(char *buf, uint32_t size) {
+    if ((uint32_t)buf >= KERNEL_START) return -1;
+    strncpy(buf, currentProcess->cwd, size);
+    return 0;
+}
+
+static int SysChDir(const char *path) {
+    if ((uint32_t)path >= KERNEL_START) return -1;
+
+    char resolved[PATH_MAX];
+    if (PathResolve(currentProcess->cwd, path, resolved) < 0) return -1;
+
+    DIR dir;
+    if (f_opendir(&dir, resolved) != FR_OK) return -1;
+    f_closedir(&dir);
+
+    strncpy(currentProcess->cwd, resolved, PATH_MAX);
+    return 0;
+}
+
+static int SysStat(const char *path, StatInfo *info) {
+    if ((uint32_t)path >= KERNEL_START) return -1;
+    if ((uint32_t)info >= KERNEL_START) return -1;
+
+    char resolved[PATH_MAX];
+    if (PathResolve(currentProcess->cwd, path, resolved) < 0) return -1;
+
+    FILINFO fno;
+    if (f_stat(resolved, &fno) != FR_OK) {
+        info->exists = 0;
+        return -1;
+    }
+
+    info->exists = 1;
+    info->size = (uint32_t)fno.fsize;
+    info->isDir = (fno.fattrib & AM_DIR) ? 1 : 0;
+
+    strncpy(info->name, *fno.fname ? fno.fname : fno.altname,
+            sizeof(info->name));
+
+    return 0;
+}
+
 uint32_t SyscallDispatch(SyscallRegs *regs) {
     switch (regs->eax) {
         case SYSCALL_EXIT:
@@ -177,6 +241,9 @@ uint32_t SyscallDispatch(SyscallRegs *regs) {
         case SYSCALL_OPEN:
             return (uint32_t)SysOpen((const char *)regs->ebx, regs->ecx);
 
+        case SYSCALL_OPENDIR:
+            return (uint32_t)SysOpenDir((const char *)regs->ebx);
+
         case SYSCALL_CLOSE:
             return (uint32_t)FDClose(currentProcess, (int)regs->ebx);
 
@@ -186,6 +253,10 @@ uint32_t SyscallDispatch(SyscallRegs *regs) {
             if (!fd->ops.seek) return (uint32_t)-1;
             return (uint32_t)fd->ops.seek(fd, (int32_t)regs->ecx,
                                           (int)regs->edx);
+
+        case SYSCALL_STAT:
+            return (uint32_t)SysStat((const char *)regs->ebx,
+                                     (StatInfo *)regs->ecx);
 
         case SYSCALL_GETENV:
             return SysGetEnv((const char *)regs->ebx, (char *)regs->ecx,
@@ -197,6 +268,11 @@ uint32_t SyscallDispatch(SyscallRegs *regs) {
 
         case SYSCALL_SBRK:
             return SysSbrk(regs->ebx);
+
+        case SYSCALL_GETCWD:
+            return (uint32_t)SysGetCWD((char *)regs->ebx, regs->ecx);
+        case SYSCALL_CHDIR:
+            return (uint32_t)SysChDir((const char *)regs->ebx);
 
         default:
             printf("Unknown syscall %u\n", regs->eax);

@@ -1,15 +1,12 @@
 #include "stdio.h"
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "syscall.h"
 
-void puts(const char *s) {
-    uint32_t len = 0;
-    while (s[len]) len++;
-    write(FD_STDOUT, s, len);
-}
+void puts(const char *s) { write(FD_STDOUT, s, strlen(s)); }
 
 char *gets(char *buf, int size) {
     int n = read(FD_STDIN, buf, size - 1);
@@ -23,17 +20,38 @@ char *gets(char *buf, int size) {
     return buf;
 }
 
-static void fd_write_char(int fd, char c) { write(fd, &c, 1); }
+typedef struct {
+    char *buf;
+    int max;
+    int pos;
+    int fd;
+    int is_buffer;
+} out_t;
 
-static void fd_write_str(int fd, const char *s) { write(fd, s, strlen(s)); }
+static void out_char(out_t *o, char c) {
+    if (o->is_buffer) {
+        if (o->pos < o->max - 1) {
+            o->buf[o->pos] = c;
+        }
+        o->pos++;
+    } else {
+        write(o->fd, &c, 1);
+        o->pos++;
+    }
+}
 
-static void fd_write_int(int fd, int n, int base, int pad, char pad_char) {
+static void out_str(out_t *o, const char *s) {
+    while (*s) out_char(o, *s++);
+}
+
+static void out_int(out_t *o, int n, int base, int pad, char pad_char) {
     char buf[32];
     int i = 30;
     int neg = (base == 10 && n < 0);
     unsigned int u = neg ? (unsigned int)-n : (unsigned int)n;
 
     buf[31] = '\0';
+
     if (u == 0) {
         buf[i--] = '0';
     } else {
@@ -42,20 +60,19 @@ static void fd_write_int(int fd, int n, int base, int pad, char pad_char) {
             u /= base;
         }
     }
+
     if (neg) buf[i--] = '-';
 
     int len = 30 - i;
-    while (len++ < pad) fd_write_char(fd, pad_char);
-    fd_write_str(fd, &buf[i + 1]);
+    while (len++ < pad) out_char(o, pad_char);
+
+    out_str(o, &buf[i + 1]);
 }
 
-int vfprintf(int fd, const char *fmt, va_list args) {
-    int written = 0;
-
+int vformat(out_t *o, const char *fmt, va_list args) {
     while (*fmt) {
         if (*fmt != '%') {
-            fd_write_char(fd, *fmt++);
-            written++;
+            out_char(o, *fmt++);
             continue;
         }
         fmt++;
@@ -72,36 +89,55 @@ int vfprintf(int fd, const char *fmt, va_list args) {
         switch (*fmt++) {
             case 'd':
             case 'i':
-                fd_write_int(fd, va_arg(args, int), 10, width, pad_char);
+                out_int(o, va_arg(args, int), 10, width, pad_char);
                 break;
+
             case 'u':
-                fd_write_int(fd, (int)va_arg(args, unsigned int), 10, width,
-                             pad_char);
+                out_int(o, (int)va_arg(args, unsigned int), 10, width,
+                        pad_char);
                 break;
+
             case 'x':
-                fd_write_int(fd, (int)va_arg(args, unsigned int), 16, width,
-                             pad_char);
+                out_int(o, (int)va_arg(args, unsigned int), 16, width,
+                        pad_char);
                 break;
+
             case 's': {
                 const char *s = va_arg(args, const char *);
                 if (!s) s = "(null)";
                 int len = strlen(s);
-                while (len++ < width) fd_write_char(fd, pad_char);
-                fd_write_str(fd, s);
+                while (len++ < width) out_char(o, pad_char);
+                out_str(o, s);
                 break;
             }
+
             case 'c':
-                fd_write_char(fd, (char)va_arg(args, int));
+                out_char(o, (char)va_arg(args, int));
                 break;
+
             case '%':
-                fd_write_char(fd, '%');
+                out_char(o, '%');
                 break;
+
             default:
-                fd_write_char(fd, '?');
+                out_char(o, '?');
                 break;
         }
     }
-    return written;
+    return o->pos;
+}
+
+int vfprintf(int fd, const char *fmt, va_list args) {
+    out_t o = {.buf = NULL, .max = 0, .pos = 0, .fd = fd, .is_buffer = 0};
+    return vformat(&o, fmt, args);
+}
+
+int fprintf(int fd, const char *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    int r = vfprintf(fd, fmt, args);
+    va_end(args);
+    return r;
 }
 
 int printf(const char *fmt, ...) {
@@ -112,10 +148,23 @@ int printf(const char *fmt, ...) {
     return r;
 }
 
-int fprintf(int fd, const char *fmt, ...) {
+int vsnprintf(char *buf, int size, const char *fmt, va_list args) {
+    out_t o = {.buf = buf, .max = size, .pos = 0, .fd = 0, .is_buffer = 1};
+
+    int written = vformat(&o, fmt, args);
+
+    if (size > 0) {
+        int term = (o.pos < size) ? o.pos : size - 1;
+        buf[term] = '\0';
+    }
+
+    return written;
+}
+
+int snprintf(char *buf, int size, const char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
-    int r = vfprintf(fd, fmt, args);
+    int r = vsnprintf(buf, size, fmt, args);
     va_end(args);
     return r;
 }
@@ -134,6 +183,7 @@ int scanf(const char *fmt, ...) {
             continue;
         }
         fmt++;
+
         switch (*fmt++) {
             case 'd': {
                 while (*p == ' ') p++;
@@ -150,6 +200,7 @@ int scanf(const char *fmt, ...) {
             }
         }
     }
+
     va_end(args);
     return 0;
 }

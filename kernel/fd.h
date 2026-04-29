@@ -3,6 +3,9 @@
 
 #include <stdint.h>
 
+#include "fatfs/ff.h"
+#include "path.h"
+
 #define FD_MAX 16
 #define FD_STDIN 0
 #define FD_STDOUT 1
@@ -12,7 +15,19 @@ typedef enum {
     FD_TYPE_NONE = 0,
     FD_TYPE_TTY,
     FD_TYPE_FILE,
+    FD_TYPE_DIR,
 } FDType;
+
+typedef struct {
+    DIR dir;
+    char path[PATH_MAX];
+} FDDir;
+
+typedef struct {
+    char name[256];
+    uint32_t size;
+    uint8_t isDir;
+} DirEnt;
 
 typedef struct FileDescriptor FileDescriptor;
 

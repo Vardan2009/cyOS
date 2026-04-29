@@ -14,5 +14,8 @@ void *memset(void *dst, int c, size_t n);
 int memcmp(const void *a, const void *b, size_t n);
 size_t strcspn(const char *s, const char *reject);
 char *strtok(char *str, const char *delim);
+char *strsep(char **str, const char *delim);
+char *strncat(char *dest, const char *src, uint32_t n);
+char *strdup(const char *s);
 
 #endif  // CYLIBC_STRING_H

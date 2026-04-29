@@ -3,6 +3,7 @@
 #include "fatfs/ff.h"
 #include "fd.h"
 #include "kmalloc.h"
+#include "path.h"
 
 #define SEEK_SET 0
 #define SEEK_CUR 1
@@ -72,4 +73,11 @@ int FDOpenFile(FileDescriptor *fd, const char *path, uint8_t flags) {
     fd->writable = (flags & FA_WRITE) ? 1 : 0;
     fd->data = fil;
     return 0;
+}
+
+int FDOpenRelative(FileDescriptor *fd, const char *path, uint8_t flags,
+                   const char *cwd) {
+    char resolved[PATH_MAX];
+    if (PathResolve(cwd, path, resolved) < 0) return -1;
+    return FDOpenFile(fd, resolved, flags);
 }

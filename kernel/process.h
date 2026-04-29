@@ -11,6 +11,8 @@
 #define PROCESS_MAX_ARGS 32
 #define PROCESS_MAX_ENV 32
 
+#include "path.h"
+
 typedef struct _Process {
     uint32_t *pageDir;
     uint32_t entry;
@@ -29,6 +31,8 @@ typedef struct _Process {
     int envc;
 
     uint32_t heapBreak;
+
+    char cwd[PATH_MAX];
 } Process;
 
 extern Process *currentProcess;

@@ -123,5 +123,10 @@ Process *ELFLoad(const char *path) {
     } else
         FDInitProcess(proc);
 
+    if (currentProcess)
+        strncpy(proc->cwd, currentProcess->cwd, PATH_MAX);
+    else
+        strncpy(proc->cwd, "0:/", PATH_MAX);
+
     return proc;
 }

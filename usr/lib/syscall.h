@@ -34,14 +34,19 @@ static inline uint32_t syscall3(uint32_t num, uint32_t a1, uint32_t a2,
 #define SYSCALL_READ 3
 #define SYSCALL_WRITE 4
 #define SYSCALL_OPEN 5
-#define SYSCALL_CLOSE 6
-#define SYSCALL_SEEK 7
+#define SYSCALL_OPENDIR 6
+#define SYSCALL_CLOSE 7
+#define SYSCALL_SEEK 8
+#define SYSCALL_STAT 9
 
-#define SYSCALL_GETENV 8
-#define SYSCALL_SETENV 9
-#define SYSCALL_UNSETENV 10
+#define SYSCALL_GETENV 10
+#define SYSCALL_SETENV 11
+#define SYSCALL_UNSETENV 12
 
-#define SYSCALL_SBRK 11
+#define SYSCALL_SBRK 13
+
+#define SYSCALL_GETCWD 14
+#define SYSCALL_CHDIR 15
 
 void exit(int code);
 
@@ -65,8 +70,27 @@ static inline int write(int fd, const void *buf, uint32_t count) {
     return (int)syscall3(SYSCALL_WRITE, (uint32_t)fd, (uint32_t)buf, count);
 }
 
-static void *sbrk(int32_t inc) {
+static inline void *sbrk(int32_t inc) {
     return (void *)syscall1(SYSCALL_SBRK, (uint32_t)inc);
+}
+
+static inline int getcwd(char *buf, size_t size) {
+    return (int)syscall2(SYSCALL_GETCWD, (uint32_t)buf, (uint32_t)size);
+}
+
+static inline int chdir(const char *path) {
+    return (int)syscall1(SYSCALL_CHDIR, (uint32_t)path);
+}
+
+typedef struct {
+    uint32_t size;
+    uint8_t isDir;
+    uint8_t exists;
+    char name[256];
+} StatInfo;
+
+static inline int stat(const char *path, StatInfo *info) {
+    return (int)syscall2(SYSCALL_STAT, (uint32_t)path, (uint32_t)info);
 }
 
 #endif  // CYLIBC_SYSCALL_H

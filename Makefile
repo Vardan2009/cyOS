@@ -8,7 +8,7 @@ CINCLUDES = -Ilib -Ikernel -Idev -Iboot -Iarch/x86 -Imm -Ifs
 CCFLAGS   = -g -target i686-unknown-none-elf -ffreestanding -nostdlib -fno-builtin -fno-stack-protector -m32 $(CINCLUDES)
 DEPFLAGS  = -MMD -MP
 ASMFLAGS  = -felf32
-EMUFLAGS  = -serial mon:stdio -vga virtio -m 256M -display sdl #-S -s
+EMUFLAGS  = -serial mon:stdio -display sdl #-S -s
 LDFLAGS = -target i686-unknown-none-elf -m32 -nostdlib -T boot/linker.ld -fuse-ld=lld -Wl,-z,notext
 
 C_SRCS   := $(wildcard kernel/*.c dev/*.c lib/*.c arch/x86/*.c mm/*.c fs/**/*.c fs/*.c)

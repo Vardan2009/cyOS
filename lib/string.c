@@ -86,3 +86,31 @@ char *strcat(char *dest, const char *src) {
     }
     return dest;
 }
+
+char *strsep(char **str, const char *delim) {
+    if (!*str) return NULL;
+    char *start = *str;
+    char *p = start;
+    while (*p) {
+        const char *d = delim;
+        while (*d) {
+            if (*p == *d) {
+                *p = '\0';
+                *str = p + 1;
+                return start;
+            }
+            ++d;
+        }
+        ++p;
+    }
+    *str = NULL;
+    return start;
+}
+
+char *strncat(char *dest, const char *src, uint32_t n) {
+    char *ptr = dest;
+    while (*ptr) ptr++;
+    while (n-- && (*ptr++ = *src++));
+    *ptr = '\0';
+    return dest;
+}

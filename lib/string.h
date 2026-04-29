@@ -13,5 +13,7 @@ uint32_t strlen(const char *s);
 char *strcpy(char *dest, const char *src);
 char *strncpy(char *dest, const char *src, uint32_t n);
 char *strcat(char *dest, const char *src);
+char *strsep(char **str, const char *delim);
+char *strncat(char *dest, const char *src, uint32_t n);
 
 #endif  // CY_STRING_H
