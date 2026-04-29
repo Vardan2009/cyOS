@@ -13,6 +13,7 @@
 #define O_RDONLY FA_READ
 #define O_WRONLY FA_WRITE
 #define O_RDWR (FA_READ | FA_WRITE)
+
 #define O_CREAT FA_CREATE_ALWAYS
 
 void puts(const char *s);
