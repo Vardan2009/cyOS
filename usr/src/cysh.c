@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "ansi.h"
 #include "syscall.h"
 
 #define MAX_ARGS 32
@@ -102,14 +103,33 @@ static void ShellExec(char *line) {
         fprintf(FD_STDERR, "shell: %s: not found\n", argv[0]);
 }
 
-int main(int argc, char **argv, char **envp) {
-    if (!getenv("PATH")) setenv("PATH", "1:/bin", 1);
+#define STRINGIFY_HELPER(x) #x
+#define STRINGIFY(x) STRINGIFY_HELPER(x)
 
-    printf("Welcome to cyShell\n");
+#if defined(__clang__)
+#define COMPILER_INFO \
+    "clang " STRINGIFY(__clang_major__) "." STRINGIFY(__clang_minor__)
+#elif defined(__GNUC__)
+#define COMPILER_INFO "gcc " STRINGIFY(__GNUC__) "." STRINGIFY(__GNUC_MINOR__)
+#else
+#define COMPILER_INFO "unknown compiler"
+#endif
+
+int main(int argc, char **argv, char **envp) {
+    if (argc != 1 && strcmp(argv[1], "-v") == 0) {
+        printf("cyShell 0.1.0 compiled with " COMPILER_INFO " at " __DATE__
+               "\n");
+        return 1;
+    }
+
+    if (!getenv("PATH")) setenv("PATH", "1:/bin", 1);
 
     char line[256];
     while (1) {
-        printf("%s $ ", GetCWDBuf());
+        printf(ANSI_BOLD ANSI_FG_BRIGHT_GREEN
+               "user" ANSI_RESET "@" ANSI_BOLD ANSI_FG_BRIGHT_GREEN
+               "cyos" ANSI_RESET ":" ANSI_FG_BRIGHT_CYAN "%s" ANSI_RESET "$ ",
+               GetCWDBuf());
         gets(line, sizeof(line));
         if (line[0]) ShellExec(line);
     }

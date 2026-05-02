@@ -26,17 +26,34 @@
 #define VGA_CTRL_REG 0x3D4
 #define VGA_DATA_REG 0x3D5
 
-#define VGA_COLOR(FG, BG) ((BG) << 8 | (FG << 12))
+#define VGA_DISP_FG(COL) (((COL) >> 8) & 0xF)
+#define VGA_DISP_BG(COL) (((COL) >> 12) & 0xF)
+#define VGA_COLOR(FG, BG) ((BG) << 8 | (FG) << 12)
+
 #define VGA_CHAR(CH, COL) ((CH) | (COL))
 
 void VGAPrintC(char c);
 void VGAPrint(char *s);
 void VGAScroll();
 void VGABackspace();
-
 void VGALineBreak();
 void VGAReset();
-
 void VGASetCurPos(uint16_t position);
+
+uint16_t VGAGetColor(void);
+void VGASetColor(uint16_t color);
+
+void VGAGetCursor(int *row, int *col);
+void VGASetCursor(int row, int col);
+
+void VGAClearScreen(void);
+void VGAClearToEOL(void);
+void VGAClearFromBOL(void);
+void VGAClearLine(int row);
+
+void VGADeleteChars(int count);
+
+void VGAShowCursor(void);
+void VGAHideCursor(void);
 
 #endif  // CY_VGA_H

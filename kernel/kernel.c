@@ -1,5 +1,6 @@
 #include <stdio.h>
 
+#include "ansi.h"
 #include "ata.h"
 #include "console.h"
 #include "elf.h"
@@ -47,12 +48,13 @@ void kmain(uint32_t magic, MultibootInfo *mbi) {
     cr4 |= (1 << 9) | (1 << 10);
     asm volatile("mov %0, %%cr4" ::"r"(cr4));
 
-    ConsolePutC = VGAPrintC;
-    ConsolePutS = VGAPrint;
+    VGAReset();
+    ANSIInit();
+
+    ConsolePutC = ANSIPutC;
+    ConsolePutS = ANSIPutS;
 
     SerialInit(DBGPORT);
-
-    VGAReset();
 
     printf("Hello, cyOS!\n");
 

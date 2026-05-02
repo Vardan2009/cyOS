@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "ansi.h"
 #include "dirent.h"
 
 static void FmtSize(uint32_t size, char *out) {
@@ -48,10 +49,13 @@ static void DoLs(const char *path, int longFmt) {
             else
                 FmtSize(entries[i].size, size_str);
 
-            printf("%c  %6s  %s\n", entries[i].isDir ? 'd' : '-', size_str,
+            printf("%c  %6s  %s%s\n" ANSI_RESET, entries[i].isDir ? 'd' : '-',
+                   size_str, entries[i].isDir ? ANSI_FG_BLUE ANSI_BOLD : "",
                    entries[i].name);
         } else {
-            printf("%s%s\n", entries[i].name, entries[i].isDir ? "/" : "");
+            printf("%s%s" ANSI_RESET "%s\n",
+                   entries[i].isDir ? ANSI_FG_BLUE ANSI_BOLD : "",
+                   entries[i].name, entries[i].isDir ? "/" : "");
         }
     }
 }
