@@ -1,6 +1,8 @@
 # cyOS
+cyOS is a 32-bit operating system for the x86 CPU architecture.
 
-cyOS is a simple UNIX-like 32-bit Operating System for the x86 CPU architecture.
+<img width="720" height="400" alt="image" src="https://github.com/user-attachments/assets/1236354d-9211-4315-aa5e-9f843022442b" />
+
 
 ## Current features
 
@@ -14,7 +16,7 @@ cyOS is a simple UNIX-like 32-bit Operating System for the x86 CPU architecture.
 - User tools and libc
 - ELF executables and user processes
 - ANSI output rendering
-- User-mode shell
+- User-mode shell (cyShell)
 
 ## Future features
 
